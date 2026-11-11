@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Жалобы — Админ')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="studio">
+            <nav th:replace="~{fragments/panels :: adminNav}"></nav>
+            <div>
+                <div class="page-head">
+                    <div><h1 class="page-title">Жалобы</h1><p class="page-sub">Проверка контента, на который пожаловались зрители</p></div>
+                    <div class="segmented">
+                        <a th:classappend="${status == 'OPEN'} ? 'active'" th:href="@{/admin/reports(status='OPEN')}">Открытые</a>
+                        <a th:classappend="${status == 'DISMISSED'} ? 'active'" th:href="@{/admin/reports(status='DISMISSED')}">Отклонённые</a>
+                        <a th:classappend="${status == 'ALL'} ? 'active'" th:href="@{/admin/reports(status='ALL')}">Все</a>
+                    </div>
+                </div>
+                <div class="vlist" th:if="${!reports.isEmpty()}">
+                    <div class="list-card" th:each="r : ${reports}" style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
+                        <a th:href="@{/watch/{id}(id=${r.video.id})}" style="flex:0 0 200px"><img th:src="${r.video.thumbnailUrl}" alt="" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:12px"></a>
+                        <div style="flex:1;min-width:220px">
+                            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+                                <span class="badge badge-red"><i data-lucide="flag"></i><th:block th:text="${r.reason.label}"></th:block></span>
+                                <span class="badge" th:classappend="${r.status.name() == 'OPEN'} ? 'badge-amber'" th:text="${r.status.name() == 'OPEN'} ? 'Открыта' : 'Отклонена'"></span>
+                                <span class="dim" style="font-size:13px" th:text="${@fmt.ago(r.createdAt)}"></span>
+                            </div>
+                            <a th:href="@{/watch/{id}(id=${r.video.id})}"><b th:text="${r.video.title}"></b></a>
+                            <p class="dim" style="font-size:13.5px;margin-top:4px">Автор: <a th:href="@{/channel/{u}(u=${r.video.author.username})}" th:text="${r.video.author.displayName}"></a> · Отправил: <a th:href="@{/channel/{u}(u=${r.reporter.username})}" th:text="${r.reporter.displayName}"></a></p>
+                            <p class="muted" style="margin-top:8px;white-space:pre-wrap" th:if="${r.details != null}" th:text="${r.details}"></p>
+                        </div>
+                        <div class="row-actions" th:if="${r.status.name() == 'OPEN'}">
+                            <form th:action="@{/admin/reports/{id}/dismiss(id=${r.id})}" method="post"><button class="btn btn-sm" type="submit"><i data-lucide="check"></i>Нарушений нет</button></form>
+                            <form th:action="@{/admin/reports/{id}/remove(id=${r.id})}" method="post" data-confirm="Удалить видео как нарушающее правила?"><button class="btn btn-sm btn-danger" type="submit"><i data-lucide="trash-2"></i>Удалить видео</button></form>
+                        </div>
+                    </div>
+                </div>
+                <div class="empty" th:if="${reports.isEmpty()}">
+                    <div class="empty-icon"><i data-lucide="shield-check"></i></div>
+                    <h3>Жалоб нет</h3>
+                    <p>Когда зрители сообщат о нарушении, жалоба появится здесь.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

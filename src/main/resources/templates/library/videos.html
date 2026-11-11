@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="page-head">
+            <div>
+                <h1 class="page-title"><span class="title-icon"><i th:attr="data-lucide=${icon}"></i></span><th:block th:text="${title}"></th:block></h1>
+                <p class="page-sub" th:text="${subtitle}"></p>
+            </div>
+            <span class="badge" th:text="${videos.size()} + ' видео'"></span>
+        </div>
+        <div class="grid-videos stagger" th:if="${!videos.isEmpty()}">
+            <th:block th:each="v : ${videos}">
+                <article th:replace="~{fragments/cards :: video(${v}, null, 0)}"></article>
+            </th:block>
+        </div>
+        <div class="empty" th:if="${videos.isEmpty()}">
+            <div class="empty-icon"><i th:attr="data-lucide=${icon}"></i></div>
+            <h3>Здесь пока пусто</h3>
+            <p>Находите видео и сохраняйте их — они появятся в этом разделе.</p>
+            <a class="btn btn-primary" th:href="@{/}">Смотреть рекомендации</a>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

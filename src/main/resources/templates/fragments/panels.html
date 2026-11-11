@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="studioNav" class="studio-nav">
+    <div class="head">
+        <th:block th:replace="~{fragments/layout :: avatar(${me}, 'md')}"></th:block>
+        <div><b th:text="${me.displayName}"></b><small>Creator Studio</small></div>
+    </div>
+    <a class="nav-item" th:classappend="${section == 'dashboard'} ? 'active'" th:href="@{/studio}"><i data-lucide="layout-dashboard"></i><span class="nav-label">Панель</span></a>
+    <a class="nav-item" th:classappend="${section == 'videos'} ? 'active'" th:href="@{/studio/videos}"><i data-lucide="clapperboard"></i><span class="nav-label">Контент</span></a>
+    <a class="nav-item" th:classappend="${section == 'analytics'} ? 'active'" th:href="@{/studio/analytics}"><i data-lucide="chart-line"></i><span class="nav-label">Статистика</span></a>
+    <a class="nav-item" th:classappend="${section == 'comments'} ? 'active'" th:href="@{/studio/comments}"><i data-lucide="messages-square"></i><span class="nav-label">Комментарии</span></a>
+    <a class="nav-item" th:href="@{/upload}"><i data-lucide="upload"></i><span class="nav-label">Загрузить</span></a>
+    <a class="nav-item" th:href="@{/channel/{u}(u=${me.username})}"><i data-lucide="external-link"></i><span class="nav-label">Мой канал</span></a>
+</nav>
+
+<nav th:fragment="adminNav" class="studio-nav">
+    <div class="head">
+        <span class="title-icon" style="width:44px;height:44px;border-radius:14px;background:var(--grad);display:grid;place-items:center"><i data-lucide="shield"></i></span>
+        <div><b>Администрирование</b><small>VYBE Control</small></div>
+    </div>
+    <a class="nav-item" th:classappend="${section == 'dashboard'} ? 'active'" th:href="@{/admin}"><i data-lucide="activity"></i><span class="nav-label">Обзор</span></a>
+    <a class="nav-item" th:classappend="${section == 'users'} ? 'active'" th:href="@{/admin/users}"><i data-lucide="users"></i><span class="nav-label">Пользователи</span></a>
+    <a class="nav-item" th:classappend="${section == 'videos'} ? 'active'" th:href="@{/admin/videos}"><i data-lucide="film"></i><span class="nav-label">Видео</span></a>
+    <a class="nav-item" th:classappend="${section == 'categories'} ? 'active'" th:href="@{/admin/categories}"><i data-lucide="tags"></i><span class="nav-label">Категории</span></a>
+    <a class="nav-item" th:classappend="${section == 'reports'} ? 'active'" th:href="@{/admin/reports}"><i data-lucide="flag"></i><span class="nav-label">Жалобы</span>
+        <span class="count" th:if="${openReports > 0}" th:text="${openReports}"></span></a>
+</nav>
+</body>
+</html>

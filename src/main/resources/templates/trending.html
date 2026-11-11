@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('В тренде')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="page-head">
+            <div>
+                <h1 class="page-title"><span class="title-icon"><i data-lucide="flame"></i></span>В тренде</h1>
+                <p class="page-sub">Самые просматриваемые видео за выбранный период</p>
+            </div>
+            <div class="segmented">
+                <a th:classappend="${days == 1} ? 'active'" th:href="@{/trending(days=1,category=${activeCategory})}">24 часа</a>
+                <a th:classappend="${days == 7} ? 'active'" th:href="@{/trending(days=7,category=${activeCategory})}">Неделя</a>
+                <a th:classappend="${days == 30} ? 'active'" th:href="@{/trending(days=30,category=${activeCategory})}">Месяц</a>
+            </div>
+        </div>
+        <div class="chips" style="margin-bottom:28px">
+            <a class="chip" th:classappend="${activeCategory == null or activeCategory.isEmpty()} ? 'active'" th:href="@{/trending(days=${days})}">Все</a>
+            <a class="chip" th:each="c : ${navCategories}" th:classappend="${c.slug == activeCategory} ? 'active'"
+               th:href="@{/trending(days=${days},category=${c.slug})}" th:style="'--c:' + ${c.color}"><span class="dot"></span><th:block th:text="${c.name}"></th:block></a>
+        </div>
+
+        <div class="vlist" th:if="${!videos.isEmpty()}">
+            <div th:each="v, st : ${videos}" style="display:flex;gap:18px;align-items:center">
+                <span class="hero-mini-rank grad-text" style="width:56px;text-align:center;flex-shrink:0;margin:0" th:text="${st.count}">1</span>
+                <div style="flex:1;min-width:0">
+                    <article th:replace="~{fragments/cards :: wide(${v}, 0)}"></article>
+                </div>
+            </div>
+        </div>
+        <div class="empty" th:if="${videos.isEmpty()}">
+            <div class="empty-icon"><i data-lucide="flame"></i></div>
+            <h3>Пока ничего не набирает обороты</h3>
+            <p>Как только видео начнут смотреть, здесь появится рейтинг.</p>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Creator Studio')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="studio">
+            <nav th:replace="~{fragments/panels :: studioNav}"></nav>
+            <div>
+                <div class="page-head">
+                    <div>
+                        <h1 class="page-title">Привет, <span class="grad-text" th:text="${me.displayName}"></span></h1>
+                        <p class="page-sub">Вот как дела у вашего канала за последние 30 дней</p>
+                    </div>
+                    <a class="btn btn-primary" th:href="@{/upload}"><i data-lucide="upload"></i>Загрузить видео</a>
+                </div>
+
+                <div class="stats-grid stagger">
+                    <div class="stat-card" style="--c:#8b5cf6;--i:0">
+                        <div class="ico"><i data-lucide="eye"></i></div>
+                        <span class="delta" th:classappend="${totals.viewsTrend() >= 0} ? 'up' : 'down'" th:text="(${totals.viewsTrend() >= 0} ? '+' : '') + ${totals.viewsTrend()} + '%'"></span>
+                        <div class="val" th:text="${@fmt.compact(totals.views30())}">0</div>
+                        <div class="lbl">Просмотров за 30 дней</div>
+                    </div>
+                    <div class="stat-card" style="--c:#3b6bff;--i:1">
+                        <div class="ico"><i data-lucide="users"></i></div>
+                        <span class="delta up" th:if="${totals.subs30() > 0}" th:text="'+' + ${totals.subs30()}"></span>
+                        <div class="val" th:text="${@fmt.compact(totals.subscribers())}">0</div>
+                        <div class="lbl">Подписчиков</div>
+                    </div>
+                    <div class="stat-card" style="--c:#ec4899;--i:2">
+                        <div class="ico"><i data-lucide="heart"></i></div>
+                        <div class="val" th:text="${@fmt.compact(totals.likes())}">0</div>
+                        <div class="lbl">Лайков всего</div>
+                    </div>
+                    <div class="stat-card" style="--c:#22d3ee;--i:3">
+                        <div class="ico"><i data-lucide="film"></i></div>
+                        <div class="val" th:text="${totals.videos()}">0</div>
+                        <div class="lbl" th:text="${@fmt.compact(totals.views())} + ' просмотров всего'"></div>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-head">
+                        <div><h3>Просмотры</h3><span class="dim" style="font-size:13px;font-weight:600">по дням</span></div>
+                        <div class="segmented" data-chart-range="viewsChart">
+                            <button type="button" data-days="7">7 дн.</button>
+                            <button type="button" data-days="30" class="active">30 дн.</button>
+                            <button type="button" data-days="90">90 дн.</button>
+                        </div>
+                    </div>
+                    <div class="chart" id="viewsChart" data-src="/api/studio/views" data-days="30" data-color="#8b5cf6" data-color2="#3b6bff" data-unit="просмотров"></div>
+                </div>
+
+                <div class="two-col">
+                    <div class="list-card">
+                        <h3>Лучшие видео <a class="section-link" th:href="@{/studio/analytics}">Все<i data-lucide="chevron-right"></i></a></h3>
+                        <div class="vlist" style="gap:4px" th:if="${!topVideos.isEmpty()}">
+                            <th:block th:each="v : ${topVideos}">
+                                <a th:replace="~{fragments/cards :: row(${v}, ${'/studio/videos/' + v.id}, false)}"></a>
+                            </th:block>
+                        </div>
+                        <p class="dim" th:if="${topVideos.isEmpty()}">Загрузите первое видео, чтобы увидеть статистику.</p>
+                    </div>
+                    <div class="list-card">
+                        <h3>Новые комментарии <a class="section-link" th:href="@{/studio/comments}">Все<i data-lucide="chevron-right"></i></a></h3>
+                        <div th:each="c : ${recentComments}" class="mini-comment">
+                            <th:block th:replace="~{fragments/layout :: avatar(${c.author}, 'sm')}"></th:block>
+                            <div style="min-width:0">
+                                <small><b th:text="${c.author.displayName}"></b> · <th:block th:text="${@fmt.ago(c.createdAt)}"></th:block></small>
+                                <p th:text="${c.text}"></p>
+                                <small><a th:href="@{/watch/{id}(id=${c.video.id})}" th:text="${c.video.title}"></a></small>
+                            </div>
+                        </div>
+                        <p class="dim" th:if="${recentComments.isEmpty()}">Комментариев пока нет.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/charts.js}"></script>
+</body>
+</html>

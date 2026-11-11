@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Главная')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+
+        <!-- Category chips -->
+        <div class="chips" style="margin-bottom:26px">
+            <a class="chip active" th:href="@{/}"><i data-lucide="sparkles"></i>Для вас</a>
+            <a class="chip" th:href="@{/trending}"><i data-lucide="flame"></i>В тренде</a>
+            <a class="chip" th:each="c : ${navCategories}" th:href="@{/explore/{s}(s=${c.slug})}" th:style="'--c:' + ${c.color}">
+                <span class="dot"></span><th:block th:text="${c.name}"></th:block>
+            </a>
+        </div>
+
+        <!-- Empty platform -->
+        <section class="welcome" th:if="${hero == null}">
+            <span class="hero-badge"><i data-lucide="zap"></i>Добро пожаловать в VYBE</span>
+            <h1>Видео нового поколения начинается <span class="grad-text">с вас</span></h1>
+            <p>Здесь пока тихо. Загрузите первое видео — VYBE сам сгенерирует обложку, главы и начнёт рекомендовать его зрителям.</p>
+            <div class="hero-actions">
+                <a class="btn btn-primary btn-lg" th:href="@{/upload}"><i data-lucide="upload"></i>Загрузить видео</a>
+                <a class="btn btn-glass btn-lg" th:if="${me == null}" th:href="@{/register}">Создать аккаунт</a>
+            </div>
+            <div class="welcome-orb"><i data-lucide="play"></i></div>
+        </section>
+
+        <!-- Hero -->
+        <section class="hero" th:if="${hero != null}">
+            <a class="hero-main" th:href="@{/watch/{id}(id=${hero.id})}">
+                <img th:src="${hero.thumbnailUrl}" alt="">
+                <span class="hero-badge"><i data-lucide="trophy"></i>№1 в тренде</span>
+                <h2 class="hero-title" th:text="${hero.title}">Название</h2>
+                <div class="hero-meta">
+                    <th:block th:replace="~{fragments/layout :: avatar(${hero.author}, 'sm')}"></th:block>
+                    <b th:text="${hero.author.displayName}"></b>
+                    <span>•</span><span th:text="${@fmt.views(hero.views)}"></span>
+                    <span>•</span><span th:text="${@fmt.ago(hero.createdAt)}"></span>
+                </div>
+                <div class="hero-actions">
+                    <span class="btn btn-white btn-lg"><i data-lucide="play"></i>Смотреть</span>
+                    <span class="btn btn-glass btn-lg" th:if="${hero.durationSeconds > 0}"><i data-lucide="clock-3"></i><th:block th:text="${@fmt.duration(hero.durationSeconds)}"></th:block></span>
+                </div>
+            </a>
+            <div class="hero-side" th:if="${!heroSide.isEmpty()}">
+                <a class="hero-mini" th:each="v, st : ${heroSide}" th:href="@{/watch/{id}(id=${v.id})}">
+                    <img th:src="${v.thumbnailUrl}" alt="" loading="lazy">
+                    <span class="hero-mini-rank grad-text" th:text="${st.index + 2}">2</span>
+                    <span>
+                        <b th:text="${v.title}">Название</b>
+                        <small th:text="${v.author.displayName} + ' • ' + ${@fmt.views(v.views)}"></small>
+                    </span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Continue watching -->
+        <section class="section" th:if="${!continueWatching.isEmpty()}">
+            <div class="section-head">
+                <h2 class="section-title"><i data-lucide="circle-play"></i>Продолжить просмотр</h2>
+                <a class="section-link" th:href="@{/history}">История<i data-lucide="chevron-right"></i></a>
+            </div>
+            <div class="shelf-wrap">
+                <button class="shelf-nav prev" type="button" aria-label="Назад"><i data-lucide="chevron-left"></i></button>
+                <div class="shelf stagger">
+                    <th:block th:each="h, st : ${continueWatching}">
+                        <article th:replace="~{fragments/cards :: video(${h.video}, null, ${h.progressPercent})}"></article>
+                    </th:block>
+                </div>
+                <button class="shelf-nav next" type="button" aria-label="Вперёд"><i data-lucide="chevron-right"></i></button>
+            </div>
+        </section>
+
+        <!-- New from subscriptions -->
+        <section class="section" th:if="${!subscriptionFeed.isEmpty()}">
+            <div class="section-head">
+                <h2 class="section-title"><i data-lucide="bell-ring"></i>Новое в подписках</h2>
+                <a class="section-link" th:href="@{/subscriptions}">Все подписки<i data-lucide="chevron-right"></i></a>
+            </div>
+            <div class="shelf-wrap">
+                <button class="shelf-nav prev" type="button" aria-label="Назад"><i data-lucide="chevron-left"></i></button>
+                <div class="shelf">
+                    <th:block th:each="v : ${subscriptionFeed}">
+                        <article th:replace="~{fragments/cards :: video(${v}, null, 0)}"></article>
+                    </th:block>
+                </div>
+                <button class="shelf-nav next" type="button" aria-label="Вперёд"><i data-lucide="chevron-right"></i></button>
+            </div>
+        </section>
+
+        <!-- Trending shelf -->
+        <section class="section" th:if="${trending.size() > 1}">
+            <div class="section-head">
+                <h2 class="section-title"><i data-lucide="flame"></i>Популярное <span class="pill">Trending</span></h2>
+                <a class="section-link" th:href="@{/trending}">Все тренды<i data-lucide="chevron-right"></i></a>
+            </div>
+            <div class="shelf-wrap">
+                <button class="shelf-nav prev" type="button" aria-label="Назад"><i data-lucide="chevron-left"></i></button>
+                <div class="shelf">
+                    <th:block th:each="v : ${trending}">
+                        <article th:replace="~{fragments/cards :: video(${v}, null, 0)}"></article>
+                    </th:block>
+                </div>
+                <button class="shelf-nav next" type="button" aria-label="Вперёд"><i data-lucide="chevron-right"></i></button>
+            </div>
+        </section>
+
+        <!-- Latest -->
+        <section class="section" th:if="${!latest.isEmpty()}">
+            <div class="section-head">
+                <h2 class="section-title"><i data-lucide="radio"></i>Новые публикации</h2>
+            </div>
+            <div class="grid-videos stagger">
+                <th:block th:each="v : ${latest}">
+                    <article th:replace="~{fragments/cards :: video(${v}, null, 0)}"></article>
+                </th:block>
+            </div>
+        </section>
+
+        <!-- Smart Feed -->
+        <section class="section" th:if="${!feed.isEmpty()}">
+            <div class="section-head">
+                <h2 class="section-title"><i data-lucide="sparkles"></i>Smart Feed <span class="pill">для вас</span></h2>
+                <span class="dim" style="font-size:13px;font-weight:600">Подстраивается под то, что вы смотрите</span>
+            </div>
+            <div class="grid-videos stagger" id="smartFeed" th:attr="data-offset=${feed.size()}">
+                <th:block th:each="s : ${feed}">
+                    <article th:replace="~{fragments/cards :: video(${s.video()}, ${s.reason()}, 0)}"></article>
+                </th:block>
+            </div>
+            <div class="grid-videos" id="feedSkeletons" hidden style="margin-top:34px">
+                <div th:replace="~{fragments/cards :: skeleton}"></div>
+                <div th:replace="~{fragments/cards :: skeleton}"></div>
+                <div th:replace="~{fragments/cards :: skeleton}"></div>
+                <div th:replace="~{fragments/cards :: skeleton}"></div>
+            </div>
+            <div class="feed-sentinel" id="feedSentinel"></div>
+        </section>
+
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

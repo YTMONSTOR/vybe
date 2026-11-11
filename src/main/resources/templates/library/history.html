@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('История')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main" style="max-width:1200px">
+        <div class="page-head">
+            <div>
+                <h1 class="page-title"><span class="title-icon"><i data-lucide="history"></i></span>История просмотров</h1>
+                <p class="page-sub">Продолжайте с того места, где остановились</p>
+            </div>
+            <form th:if="${entries.totalElements > 0}" th:action="@{/history/clear}" method="post" data-confirm="Очистить всю историю просмотров?">
+                <button class="btn btn-danger" type="submit"><i data-lucide="trash-2"></i>Очистить историю</button>
+            </form>
+        </div>
+        <div class="vlist stagger" th:if="${!entries.isEmpty()}">
+            <div th:each="h : ${entries}" style="position:relative">
+                <article th:replace="~{fragments/cards :: wide(${h.video}, ${h.progressPercent})}"></article>
+                <div class="vwide-side" style="display:flex;gap:6px;align-items:center">
+                    <span class="badge" th:text="${@fmt.ago(h.watchedAt)}"></span>
+                    <form th:action="@{/history/{id}/remove(id=${h.id})}" method="post">
+                        <button class="btn btn-ghost btn-icon btn-sm" type="submit" title="Удалить из истории"><i data-lucide="x"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="pager" th:if="${entries.totalPages > 1}">
+            <a class="btn btn-sm" th:if="${entries.hasPrevious()}" th:href="@{/history(page=${entries.number - 1})}"><i data-lucide="chevron-left"></i>Назад</a>
+            <span class="badge" th:text="${entries.number + 1} + ' / ' + ${entries.totalPages}"></span>
+            <a class="btn btn-sm" th:if="${entries.hasNext()}" th:href="@{/history(page=${entries.number + 1})}">Дальше<i data-lucide="chevron-right"></i></a>
+        </div>
+        <div class="empty" th:if="${entries.isEmpty()}">
+            <div class="empty-icon"><i data-lucide="history"></i></div>
+            <h3>История пуста</h3>
+            <p>Видео, которые вы смотрите, будут появляться здесь.</p>
+            <a class="btn btn-primary" th:href="@{/}">На главную</a>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

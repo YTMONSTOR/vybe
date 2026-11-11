@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Видео — Админ')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="studio">
+            <nav th:replace="~{fragments/panels :: adminNav}"></nav>
+            <div>
+                <div class="page-head"><div><h1 class="page-title">Управление видео</h1><p class="page-sub" th:text="'Всего: ' + ${videos.totalElements}"></p></div></div>
+                <form class="toolbar" th:action="@{/admin/videos}" method="get">
+                    <input class="input" name="q" th:value="${q}" placeholder="Название или логин автора">
+                    <button class="btn" type="submit"><i data-lucide="search"></i>Найти</button>
+                </form>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr><th>Видео</th><th>Автор</th><th>Доступ</th><th class="num">Просмотры</th><th class="num">Размер</th><th></th></tr></thead>
+                        <tbody>
+                        <tr th:each="v : ${videos}">
+                            <td><a class="table-video" th:href="@{/watch/{id}(id=${v.id})}"><img th:src="${v.thumbnailUrl}" alt="" loading="lazy">
+                                <span><b th:text="${v.title}"></b><small th:text="${@fmt.date(v.createdAt)}"></small></span></a></td>
+                            <td><a th:href="@{/channel/{u}(u=${v.author.username})}" th:text="${v.author.displayName}"></a></td>
+                            <td>
+                                <form th:action="@{/admin/videos/{id}/visibility(id=${v.id})}" method="post">
+                                    <select class="select" name="visibility" style="width:auto;padding:7px 34px 7px 12px;font-size:13px" onchange="this.form.submit()">
+                                        <option value="PUBLIC" th:selected="${v.visibility.name() == 'PUBLIC'}">Публичное</option>
+                                        <option value="UNLISTED" th:selected="${v.visibility.name() == 'UNLISTED'}">По ссылке</option>
+                                        <option value="PRIVATE" th:selected="${v.visibility.name() == 'PRIVATE'}">Скрыто</option>
+                                    </select>
+                                </form>
+                            </td>
+                            <td class="num" th:text="${@fmt.number(v.views)}"></td>
+                            <td class="num" th:text="${@fmt.bytes(v.fileSize)}"></td>
+                            <td><div class="row-actions">
+                                <form th:action="@{/admin/videos/{id}/delete(id=${v.id})}" method="post" data-confirm="Удалить видео как нарушающее правила? Файлы будут удалены безвозвратно.">
+                                    <button class="btn btn-sm btn-danger" type="submit"><i data-lucide="trash-2"></i>Удалить</button>
+                                </form></div></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="empty" th:if="${videos.isEmpty()}"><div class="empty-icon"><i data-lucide="film"></i></div><h3>Видео не найдены</h3></div>
+                <div class="pager" th:if="${videos.totalPages > 1}">
+                    <a class="btn btn-sm" th:if="${videos.hasPrevious()}" th:href="@{/admin/videos(page=${videos.number - 1},q=${q})}">Назад</a>
+                    <span class="badge" th:text="${videos.number + 1} + ' / ' + ${videos.totalPages}"></span>
+                    <a class="btn btn-sm" th:if="${videos.hasNext()}" th:href="@{/admin/videos(page=${videos.number + 1},q=${q})}">Дальше</a>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

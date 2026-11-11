@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Админ-панель')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="studio">
+            <nav th:replace="~{fragments/panels :: adminNav}"></nav>
+            <div>
+                <div class="page-head">
+                    <div>
+                        <h1 class="page-title">Статистика платформы</h1>
+                        <p class="page-sub">Состояние VYBE в реальном времени</p>
+                    </div>
+                </div>
+                <div class="stats-grid stagger">
+                    <div class="stat-card" style="--c:#8b5cf6"><div class="ico"><i data-lucide="users"></i></div>
+                        <span class="delta up" th:if="${totals.newUsers7() > 0}" th:text="'+' + ${totals.newUsers7()} + ' за 7 дн.'"></span>
+                        <div class="val" th:text="${@fmt.compact(totals.users())}"></div><div class="lbl">Пользователей</div></div>
+                    <div class="stat-card" style="--c:#3b6bff"><div class="ico"><i data-lucide="film"></i></div>
+                        <span class="delta up" th:if="${totals.newVideos7() > 0}" th:text="'+' + ${totals.newVideos7()}"></span>
+                        <div class="val" th:text="${@fmt.compact(totals.videos())}"></div><div class="lbl">Видео</div></div>
+                    <div class="stat-card" style="--c:#22d3ee"><div class="ico"><i data-lucide="eye"></i></div>
+                        <div class="val" th:text="${@fmt.compact(totals.views())}"></div><div class="lbl" th:text="${@fmt.compact(totals.views7())} + ' за неделю'"></div></div>
+                    <div class="stat-card" style="--c:#f43f5e"><div class="ico"><i data-lucide="flag"></i></div>
+                        <div class="val" th:text="${totals.openReports()}"></div><div class="lbl">Открытых жалоб</div></div>
+                    <div class="stat-card" style="--c:#f59e0b"><div class="ico"><i data-lucide="hard-drive"></i></div>
+                        <div class="val" th:text="${@fmt.bytes(totals.storageBytes())}"></div><div class="lbl" th:text="${@fmt.compact(totals.comments())} + ' комментариев'"></div></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-head">
+                        <h3>Просмотры на платформе</h3>
+                        <div class="segmented" data-chart-range="pViews">
+                            <button type="button" data-days="14">14 дн.</button>
+                            <button type="button" data-days="30" class="active">30 дн.</button>
+                            <button type="button" data-days="90">90 дн.</button>
+                        </div>
+                    </div>
+                    <div class="chart" id="pViews" data-src="/api/admin/views" data-days="30" data-color="#22d3ee" data-color2="#8b5cf6" data-unit="просмотров"></div>
+                </div>
+                <div class="two-col">
+                    <div class="list-card">
+                        <h3>Новые видео <a class="section-link" th:href="@{/admin/videos}">Все<i data-lucide="chevron-right"></i></a></h3>
+                        <th:block th:each="v : ${latestVideos}">
+                            <a th:replace="~{fragments/cards :: row(${v}, ${'/watch/' + v.id}, false)}"></a>
+                        </th:block>
+                        <p class="dim" th:if="${latestVideos.isEmpty()}">Видео пока нет.</p>
+                    </div>
+                    <div class="list-card">
+                        <h3>Открытые жалобы <a class="section-link" th:href="@{/admin/reports}">Все<i data-lucide="chevron-right"></i></a></h3>
+                        <div class="mini-comment" th:each="r : ${latestReports}">
+                            <span class="ccard-ico" style="--c:#f43f5e;width:38px;height:38px;flex-shrink:0"><i data-lucide="flag"></i></span>
+                            <div style="min-width:0">
+                                <small><b th:text="${r.reason.label}"></b> · <th:block th:text="${@fmt.ago(r.createdAt)}"></th:block></small>
+                                <p><a th:href="@{/watch/{id}(id=${r.video.id})}" th:text="${r.video.title}"></a></p>
+                            </div>
+                        </div>
+                        <p class="dim" th:if="${latestReports.isEmpty()}">Жалоб нет — всё спокойно.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/charts.js}"></script>
+</body>
+</html>

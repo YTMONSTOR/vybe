@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vybe-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vybe
+      POSTGRES_USER: vybe
+      POSTGRES_PASSWORD: vybe
+    ports:
+      - "5432:5432"
+    volumes:
+      - vybe-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vybe -d vybe"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  vybe-pgdata:

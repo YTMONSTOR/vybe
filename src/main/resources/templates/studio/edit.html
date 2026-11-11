@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Редактирование видео')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="studio">
+            <nav th:replace="~{fragments/panels :: studioNav}"></nav>
+            <div>
+                <div class="page-head">
+                    <div>
+                        <a class="section-link" th:href="@{/studio/videos}" style="margin-bottom:8px"><i data-lucide="chevron-left"></i>К списку видео</a>
+                        <h1 class="page-title">Детали видео</h1>
+                    </div>
+                    <div style="display:flex;gap:10px">
+                        <a class="btn" th:href="@{/watch/{id}(id=${video.id})}"><i data-lucide="play"></i>Смотреть</a>
+                        <form th:action="@{/studio/videos/{id}/delete(id=${video.id})}" method="post" data-confirm="Удалить видео безвозвратно? Это действие нельзя отменить.">
+                            <button class="btn btn-danger" type="submit"><i data-lucide="trash-2"></i>Удалить</button>
+                        </form>
+                    </div>
+                </div>
+
+                <form class="edit-layout" th:action="@{/studio/videos/{id}(id=${video.id})}" th:object="${form}" method="post" enctype="multipart/form-data">
+                    <div>
+                        <div class="field">
+                            <label class="label" for="title">Название</label>
+                            <input class="input" id="title" th:field="*{title}" maxlength="120" required>
+                            <span class="field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="description">Описание</label>
+                            <textarea class="textarea" id="description" th:field="*{description}" rows="10" maxlength="5000"></textarea>
+                            <span class="hint">Таймкоды «00:00 Название» в начале строки превращаются в главы</span>
+                            <span class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
+                        </div>
+                        <div class="two-col">
+                            <div class="field">
+                                <label class="label" for="categoryId">Категория</label>
+                                <select class="select" id="categoryId" th:field="*{categoryId}">
+                                    <option value="">Без категории</option>
+                                    <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"></option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label class="label" for="tags">Теги</label>
+                                <input class="input" id="tags" th:field="*{tags}" maxlength="400">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <span class="label">Доступ</span>
+                            <div class="radio-list">
+                                <label class="radio"><input type="radio" th:field="*{visibility}" value="PUBLIC"><span><b>Публичное</b></span></label>
+                                <label class="radio"><input type="radio" th:field="*{visibility}" value="UNLISTED"><span><b>По ссылке</b></span></label>
+                                <label class="radio"><input type="radio" th:field="*{visibility}" value="PRIVATE"><span><b>Приватное</b></span></label>
+                            </div>
+                        </div>
+                        <label class="switch" style="margin-bottom:22px"><input type="checkbox" th:field="*{commentsEnabled}">Разрешить комментарии</label>
+                        <div class="chapters" th:if="${!video.chapters.isEmpty()}" style="margin:0 0 22px">
+                            <div class="chapters-head"><span><i data-lucide="list-ordered"></i>Главы из описания</span></div>
+                            <div class="chapters-list">
+                                <div class="chapter" th:each="c : ${video.chapters}"><time th:text="${@fmt.timestamp(c.startSeconds)}"></time><b th:text="${c.title}"></b></div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-lg" type="submit"><i data-lucide="save"></i>Сохранить изменения</button>
+                    </div>
+
+                    <div class="edit-side">
+                        <div class="list-card">
+                            <h3>Обложка</h3>
+                            <div class="thumb-preview"><img id="thumbPreview" th:src="${video.thumbnailUrl}" alt=""></div>
+                            <label class="btn btn-sm" style="width:100%;margin-bottom:8px"><i data-lucide="image-plus"></i>Загрузить обложку
+                                <input type="file" name="thumbnail" accept="image/png,image/jpeg,image/webp" hidden id="thumbInput"></label>
+                            <label class="check"><input type="checkbox" name="regenerateThumbnail" value="true">Сгенерировать заново из видео</label>
+                        </div>
+                        <div class="list-card" style="margin-top:16px">
+                            <h3>Статистика</h3>
+                            <div class="stat-list" style="margin-bottom:16px">
+                                <div><i data-lucide="eye"></i><b th:text="${@fmt.number(video.views)}"></b> просмотров</div>
+                                <div><i data-lucide="thumbs-up"></i><b th:text="${video.likes}"></b> / <i data-lucide="thumbs-down"></i><b th:text="${video.dislikes}"></b></div>
+                                <div><i data-lucide="message-square"></i><b th:text="${video.commentCount}"></b> комментариев</div>
+                                <div><i data-lucide="calendar"></i><th:block th:text="${@fmt.date(video.createdAt)}"></th:block></div>
+                            </div>
+                            <div class="chart" style="height:150px" th:attr="data-src='/api/videos/' + ${video.id} + '/stats'" data-days="30" data-color="#3b6bff" data-color2="#22d3ee" data-unit="просмотров" data-compact="1"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/charts.js}"></script>
+<script>
+    document.getElementById('thumbInput').addEventListener('change', e => {
+        const f = e.target.files[0];
+        if (f) document.getElementById('thumbPreview').src = URL.createObjectURL(f);
+    });
+</script>
+</body>
+</html>

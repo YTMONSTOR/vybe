@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Grid video card. reason: optional label, progress: optional percent (0 = none) -->
+<article th:fragment="video(v, reason, progress)" class="vcard" th:attr="data-preview=${v.videoUrl},data-video-id=${v.id}">
+    <a class="vcard-thumb" th:href="@{/watch/{id}(id=${v.id})}" th:attr="aria-label=${v.title}">
+        <img class="lazy-img" th:src="${v.thumbnailUrl}" alt="" loading="lazy" decoding="async">
+        <span class="vcard-reason" th:if="${reason != null}"><i data-lucide="sparkles"></i><th:block th:text="${reason}"></th:block></span>
+        <span class="vcard-play"><i data-lucide="play"></i></span>
+        <span class="vcard-duration" th:if="${v.durationSeconds > 0}" th:text="${@fmt.duration(v.durationSeconds)}">0:00</span>
+        <span class="vcard-progress" th:if="${progress != null and progress > 0}"><span th:style="'width:' + ${progress} + '%'"></span></span>
+    </a>
+    <div class="vcard-actions" th:if="${me != null}">
+        <button class="vcard-action" type="button" data-action="save" th:attr="data-id=${v.id}" title="Сохранить в плейлист"><i data-lucide="list-plus"></i></button>
+        <button class="vcard-action" type="button" data-action="mini" th:attr="data-id=${v.id},data-src=${v.videoUrl},data-title=${v.title},data-author=${v.author.displayName}" title="Мини-плеер"><i data-lucide="picture-in-picture-2"></i></button>
+    </div>
+    <div class="vcard-body">
+        <a th:href="@{/channel/{u}(u=${v.author.username})}" th:attr="aria-label=${v.author.displayName}">
+            <th:block th:replace="~{fragments/layout :: avatar(${v.author}, 'sm')}"></th:block>
+        </a>
+        <div class="vcard-meta">
+            <a th:href="@{/watch/{id}(id=${v.id})}" class="vcard-title" th:text="${v.title}">Название</a>
+            <a class="vcard-author" th:href="@{/channel/{u}(u=${v.author.username})}" th:text="${v.author.displayName}">Автор</a>
+            <div class="vcard-stats">
+                <span th:text="${@fmt.views(v.views)}">0 просмотров</span><span class="sep">•</span><span th:text="${@fmt.ago(v.createdAt)}">сейчас</span>
+                <span class="badge" th:if="${v.visibility.name() != 'PUBLIC'}" th:text="${v.visibility.name() == 'PRIVATE'} ? 'Приватное' : 'По ссылке'"></span>
+            </div>
+        </div>
+    </div>
+</article>
+
+<!-- Compact row card (sidebar recommendations, playlists) -->
+<a th:fragment="row(v, href, current)" class="vrow" th:classappend="${current} ? 'current'" th:href="@{${href}}">
+    <span class="vrow-thumb">
+        <img class="lazy-img" th:src="${v.thumbnailUrl}" alt="" loading="lazy" decoding="async">
+        <span class="vcard-duration" th:if="${v.durationSeconds > 0}" th:text="${@fmt.duration(v.durationSeconds)}">0:00</span>
+    </span>
+    <span class="vrow-meta">
+        <span class="vrow-title" th:text="${v.title}">Название</span>
+        <span class="vrow-sub" th:text="${v.author.displayName}">Автор</span><br>
+        <span class="vrow-sub"><th:block th:text="${@fmt.views(v.views)}"></th:block> • <th:block th:text="${@fmt.ago(v.createdAt)}"></th:block></span>
+    </span>
+</a>
+
+<!-- Wide card (search, history) -->
+<article th:fragment="wide(v, progress)" class="vwide">
+    <a class="vrow-thumb" th:href="@{/watch/{id}(id=${v.id})}">
+        <img class="lazy-img" th:src="${v.thumbnailUrl}" alt="" loading="lazy">
+        <span class="vcard-duration" th:if="${v.durationSeconds > 0}" th:text="${@fmt.duration(v.durationSeconds)}">0:00</span>
+        <span class="vcard-progress" th:if="${progress != null and progress > 0}"><span th:style="'width:' + ${progress} + '%'"></span></span>
+    </a>
+    <div class="vrow-meta">
+        <a class="vwide-title" th:href="@{/watch/{id}(id=${v.id})}" th:text="${v.title}">Название</a>
+        <div class="vcard-stats"><span th:text="${@fmt.views(v.views)}"></span><span class="sep">•</span><span th:text="${@fmt.ago(v.createdAt)}"></span></div>
+        <a class="vwide-author" th:href="@{/channel/{u}(u=${v.author.username})}">
+            <th:block th:replace="~{fragments/layout :: avatar(${v.author}, 'xs')}"></th:block>
+            <span th:text="${v.author.displayName}"></span>
+        </a>
+        <p class="vwide-desc" th:if="${v.description != null}" th:text="${v.description}"></p>
+        <div class="desc-tags" th:if="${!v.tags.isEmpty()}">
+            <a class="tag" th:each="t, st : ${v.tags}" th:if="${st.index < 4}" th:href="@{/search(q='#' + ${t.name})}" th:text="'#' + ${t.name}"></a>
+        </div>
+    </div>
+</article>
+
+<!-- Playlist card -->
+<a th:fragment="playlist(p)" class="pcard" th:href="@{/playlist/{id}(id=${p.id})}" th:style="'--c:' + ${p.color}">
+    <span class="pcard-cover">
+        <span class="pcard-img">
+            <img th:if="${p.coverUrl != null}" th:src="${p.coverUrl}" alt="">
+            <i th:unless="${p.coverUrl != null}" th:attr="data-lucide=${p.icon}"></i>
+            <span class="pcard-count"><i data-lucide="list-video"></i><th:block th:text="${p.items.size()}">0</th:block></span>
+        </span>
+    </span>
+    <span>
+        <b th:text="${p.title}">Плейлист</b><br>
+        <small><th:block th:text="${p.publicVisible} ? 'Публичный' : 'Приватный'"></th:block> • обновлён <th:block th:text="${@fmt.ago(p.updatedAt)}"></th:block></small>
+    </span>
+</a>
+
+<!-- Collection card -->
+<a th:fragment="collection(p)" class="ccard" th:href="@{/playlist/{id}(id=${p.id})}" th:style="'--c:' + ${p.color}">
+    <div>
+        <span class="ccard-ico"><i th:attr="data-lucide=${p.icon}"></i></span>
+        <b th:text="${p.title}">Коллекция</b>
+        <small th:text="${p.items.size()} + ' ' + ${@fmt.plural(p.items.size(), 'видео', 'видео', 'видео')}">0 видео</small>
+    </div>
+    <div class="ccard-thumbs">
+        <img th:each="it, st : ${p.items}" th:if="${st.index < 5}" th:src="${it.video.thumbnailUrl}" alt="" loading="lazy">
+    </div>
+</a>
+
+<!-- Skeleton card -->
+<div th:fragment="skeleton" class="sk-card">
+    <div class="skeleton sk-thumb"></div>
+    <div class="sk-row">
+        <div class="skeleton sk-circle"></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+            <div class="skeleton sk-line" style="width:90%"></div>
+            <div class="skeleton sk-line" style="width:60%"></div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

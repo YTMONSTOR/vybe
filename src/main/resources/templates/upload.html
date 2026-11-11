@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Загрузка видео')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="upload-wrap">
+            <div class="page-head">
+                <div>
+                    <h1 class="page-title"><span class="title-icon"><i data-lucide="upload"></i></span>Загрузка видео</h1>
+                    <p class="page-sub">MP4, WebM, MOV, MKV до 2 ГБ. Обложка, длительность и главы создаются автоматически.</p>
+                </div>
+            </div>
+
+            <!-- Step 1: pick file -->
+            <label class="dropzone" id="dropzone">
+                <input type="file" id="fileInput" accept="video/*,.mkv,.mov,.m4v">
+                <span class="drop-orb"><i data-lucide="cloud-upload"></i></span>
+                <h2>Перетащите видео сюда</h2>
+                <p>или выберите файл на устройстве</p>
+                <span class="btn btn-primary btn-lg"><i data-lucide="folder-open"></i>Выбрать файл</span>
+            </label>
+
+            <!-- Step 2: details -->
+            <form class="upload-form" id="uploadForm" hidden novalidate>
+                <div>
+                    <div class="upload-progress" id="progressBox">
+                        <div class="row"><span id="fileName">video.mp4</span><span id="fileSize"></span></div>
+                        <div class="bar"><span id="progressBar"></span></div>
+                        <div class="row"><span id="progressText">Готово к публикации — заполните детали</span><span id="progressPct"></span></div>
+                    </div>
+                    <div class="field">
+                        <label class="label" for="title">Название *</label>
+                        <input class="input" id="title" name="title" maxlength="120" required placeholder="Расскажите, о чём ваше видео">
+                        <span class="hint"><span id="titleCount">0</span>/120</span>
+                    </div>
+                    <div class="field">
+                        <label class="label" for="description">Описание</label>
+                        <textarea class="textarea" id="description" name="description" maxlength="5000" rows="8"
+                                  placeholder="Добавьте описание.&#10;&#10;Главы создаются из таймкодов:&#10;00:00 Вступление&#10;01:30 Основная часть&#10;05:10 Итоги"></textarea>
+                        <span class="hint"><i data-lucide="list-ordered" style="width:14px;height:14px;vertical-align:-2px"></i> Строки вида «01:30 Название» станут главами видео</span>
+                    </div>
+                    <div class="two-col">
+                        <div class="field">
+                            <label class="label" for="categoryId">Категория</label>
+                            <select class="select" id="categoryId" name="categoryId">
+                                <option value="">Без категории</option>
+                                <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"></option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="tags">Теги</label>
+                            <input class="input" id="tags" name="tags" maxlength="400" placeholder="музыка, live, 2026">
+                            <span class="hint">Через запятую, до 15 тегов</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <span class="label">Доступ</span>
+                        <div class="vis-options radio-list">
+                            <label class="radio"><input type="radio" name="visibility" value="PUBLIC" checked><span><b>Публичное</b><br><span class="dim">Видно всем, участвует в рекомендациях</span></span></label>
+                            <label class="radio"><input type="radio" name="visibility" value="UNLISTED"><span><b>По ссылке</b><br><span class="dim">Только у кого есть ссылка</span></span></label>
+                            <label class="radio"><input type="radio" name="visibility" value="PRIVATE"><span><b>Приватное</b><br><span class="dim">Только вы</span></span></label>
+                        </div>
+                    </div>
+                    <label class="switch"><input type="checkbox" name="commentsEnabled" id="commentsEnabled" checked>Разрешить комментарии</label>
+                </div>
+
+                <div class="edit-side">
+                    <div class="list-card">
+                        <h3>Предпросмотр</h3>
+                        <div class="thumb-preview"><video id="previewVideo" muted playsinline controls preload="metadata"></video></div>
+                        <div class="label" style="margin-bottom:6px">Обложка</div>
+                        <div class="thumb-preview" id="thumbPreview"><img id="thumbImg" alt="" hidden></div>
+                        <div class="hint">Выберите кадр или загрузите свою картинку</div>
+                        <div class="frame-picker" id="framePicker"></div>
+                        <label class="btn btn-sm" style="margin-top:12px;width:100%">
+                            <i data-lucide="image-plus"></i>Своя обложка
+                            <input type="file" id="thumbInput" accept="image/png,image/jpeg,image/webp" hidden>
+                        </label>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:16px">
+                        <button class="btn" type="button" id="cancelBtn">Отмена</button>
+                        <button class="btn btn-primary" type="submit" id="publishBtn" style="flex:1"><i data-lucide="rocket"></i>Опубликовать</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Step 3: done -->
+            <div class="success-card" id="successCard" hidden>
+                <span class="drop-orb"><i data-lucide="check"></i></span>
+                <h2 style="font-family:var(--display);font-size:26px;margin-bottom:10px">Видео опубликовано!</h2>
+                <p class="muted" style="margin-bottom:24px">Обложка и главы готовы. Видео уже доступно зрителям.</p>
+                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+                    <a class="btn btn-primary btn-lg" id="watchLink" href="#"><i data-lucide="play"></i>Смотреть</a>
+                    <a class="btn btn-lg" id="editLink" href="#"><i data-lucide="pencil"></i>В Creator Studio</a>
+                    <a class="btn btn-lg btn-ghost" th:href="@{/upload}"><i data-lucide="plus"></i>Загрузить ещё</a>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/upload.js}"></script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Настройки')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main" style="max-width:980px">
+        <div class="page-head">
+            <div>
+                <h1 class="page-title"><span class="title-icon"><i data-lucide="settings"></i></span>Настройки канала</h1>
+                <p class="page-sub">Имя, описание, аватар и обложка канала</p>
+            </div>
+            <a class="btn" th:href="@{/channel/{u}(u=${me.username})}"><i data-lucide="external-link"></i>Открыть канал</a>
+        </div>
+
+        <div class="alert alert-error" th:if="${formError != null}"><i data-lucide="circle-alert"></i><span th:text="${formError}"></span></div>
+
+        <form class="panel" th:action="@{/settings}" th:object="${form}" method="post" enctype="multipart/form-data" style="margin-bottom:24px">
+            <div class="channel-banner" id="bannerPreview" th:style="'--h:' + ${me.hue} + ';margin-bottom:-48px'">
+                <img th:if="${me.bannerUrl != null}" th:src="${me.bannerUrl}" alt="">
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:18px;padding:0 20px;margin-bottom:26px;position:relative;z-index:2;flex-wrap:wrap">
+                <span id="avatarPreview"><th:block th:replace="~{fragments/layout :: avatar(${me}, 'xl')}"></th:block></span>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;padding-bottom:6px">
+                    <label class="btn btn-sm"><i data-lucide="image-plus"></i>Аватар<input type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" hidden data-preview="avatarPreview"></label>
+                    <label class="btn btn-sm"><i data-lucide="panorama"></i>Обложка<input type="file" name="banner" accept="image/png,image/jpeg,image/webp" hidden data-preview="bannerPreview"></label>
+                    <label class="check" th:if="${me.avatarUrl != null}"><input type="checkbox" name="removeAvatar" value="true">Удалить аватар</label>
+                    <label class="check" th:if="${me.bannerUrl != null}"><input type="checkbox" name="removeBanner" value="true">Удалить обложку</label>
+                </div>
+            </div>
+            <div class="field">
+                <label class="label" for="displayName">Название канала</label>
+                <input class="input" id="displayName" th:field="*{displayName}" maxlength="60" required>
+                <span class="field-error" th:if="${#fields.hasErrors('displayName')}" th:errors="*{displayName}"></span>
+            </div>
+            <div class="field">
+                <label class="label" for="bio">О канале</label>
+                <textarea class="textarea" id="bio" th:field="*{bio}" maxlength="1000" rows="5" placeholder="Расскажите зрителям о себе и своём контенте"></textarea>
+                <span class="field-error" th:if="${#fields.hasErrors('bio')}" th:errors="*{bio}"></span>
+            </div>
+            <div class="field">
+                <span class="label">Адрес канала</span>
+                <input class="input" th:value="'/channel/' + ${me.username}" disabled>
+            </div>
+            <button class="btn btn-primary" type="submit"><i data-lucide="save"></i>Сохранить</button>
+        </form>
+
+        <form class="panel" id="security" th:action="@{/settings/password}" method="post">
+            <h3>Безопасность</h3>
+            <div class="alert alert-error" th:if="${passwordError != null}"><i data-lucide="circle-alert"></i><span th:text="${passwordError}"></span></div>
+            <div class="two-col">
+                <div class="field"><label class="label">Текущий пароль</label><input class="input" type="password" name="currentPassword" autocomplete="current-password" required></div>
+                <div></div>
+                <div class="field"><label class="label">Новый пароль</label><input class="input" type="password" name="newPassword" minlength="8" maxlength="72" autocomplete="new-password" required></div>
+                <div class="field"><label class="label">Повторите пароль</label><input class="input" type="password" name="confirmPassword" autocomplete="new-password" required></div>
+            </div>
+            <button class="btn" type="submit"><i data-lucide="key-round"></i>Сменить пароль</button>
+        </form>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+    document.querySelectorAll('input[type=file][data-preview]').forEach(input => {
+        input.addEventListener('change', () => {
+            const f = input.files[0];
+            if (!f) return;
+            const box = document.getElementById(input.dataset.preview);
+            const target = box.classList.contains('channel-banner') ? box : box.querySelector('.avatar');
+            target.innerHTML = '<img alt="" src="' + URL.createObjectURL(f) + '">';
+            VYBE.toast('Предпросмотр обновлён — не забудьте сохранить');
+        });
+    });
+</script>
+</body>
+</html>

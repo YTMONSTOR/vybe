@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Регистрация')}"></head>
+<body>
+<div class="auth">
+    <section class="auth-art">
+        <a class="logo" th:href="@{/}"><span class="logo-mark"><i data-lucide="play"></i></span><span class="logo-word">VYBE</span></a>
+        <div>
+            <h2>Твой канал.<br>Твоя аудитория.<br><span class="grad-text">Твой вайб.</span></h2>
+            <p>Создайте аккаунт за 20 секунд — подписки, коллекции, история и собственный канал с аналитикой.</p>
+        </div>
+        <div class="auth-features">
+            <div><i data-lucide="upload"></i>Загрузка до 2 ГБ</div>
+            <div><i data-lucide="list-ordered"></i>Главы</div>
+            <div><i data-lucide="layers"></i>Коллекции</div>
+        </div>
+        <div class="auth-tiles" aria-hidden="true">
+            <div class="auth-tile" style="--h:230;--i:0"></div><div class="auth-tile" style="--h:280;--i:1"></div><div class="auth-tile" style="--h:210;--i:2"></div>
+            <div class="auth-tile" style="--h:260;--i:3"></div><div class="auth-tile" style="--h:300;--i:4"></div><div class="auth-tile" style="--h:240;--i:5"></div>
+            <div class="auth-tile" style="--h:270;--i:6"></div><div class="auth-tile" style="--h:220;--i:7"></div><div class="auth-tile" style="--h:290;--i:8"></div>
+        </div>
+    </section>
+    <section class="auth-panel">
+        <div class="auth-card">
+            <h1>Создать аккаунт</h1>
+            <p class="sub">Присоединяйтесь к VYBE</p>
+            <div class="alert alert-error" th:if="${formError != null}"><i data-lucide="circle-alert"></i><span th:text="${formError}"></span></div>
+            <form th:action="@{/register}" th:object="${form}" method="post" novalidate>
+                <div class="field">
+                    <label class="label" for="displayName">Отображаемое имя</label>
+                    <input class="input" id="displayName" th:field="*{displayName}" maxlength="60" placeholder="Например, Alex Media" required>
+                    <span class="field-error" th:if="${#fields.hasErrors('displayName')}" th:errors="*{displayName}"></span>
+                </div>
+                <div class="field">
+                    <label class="label" for="username">Имя пользователя</label>
+                    <input class="input" id="username" th:field="*{username}" maxlength="32" placeholder="alex_media" autocomplete="username" required>
+                    <span class="hint">Будет адресом канала: /channel/имя</span>
+                    <span class="field-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+                </div>
+                <div class="field">
+                    <label class="label" for="email">Email</label>
+                    <input class="input" id="email" type="email" th:field="*{email}" maxlength="120" autocomplete="email" required>
+                    <span class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+                </div>
+                <div class="field">
+                    <label class="label" for="password">Пароль</label>
+                    <div class="pw-wrap">
+                        <input class="input" id="password" type="password" th:field="*{password}" autocomplete="new-password" minlength="8" maxlength="72" required>
+                        <button class="pw-toggle" type="button" data-pw="password" aria-label="Показать пароль"><i data-lucide="eye"></i></button>
+                    </div>
+                    <div class="pw-meter" id="pwMeter"><span></span><span></span><span></span><span></span></div>
+                    <span class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+                </div>
+                <div class="field">
+                    <label class="label" for="confirmPassword">Повторите пароль</label>
+                    <input class="input" id="confirmPassword" type="password" th:field="*{confirmPassword}" autocomplete="new-password" required>
+                </div>
+                <button class="btn btn-primary btn-lg" type="submit"><i data-lucide="user-plus"></i>Создать аккаунт</button>
+            </form>
+            <p class="auth-foot">Уже есть аккаунт? <a th:href="@{/login}">Войти</a></p>
+        </div>
+    </section>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/auth.js}"></script>
+</body>
+</html>

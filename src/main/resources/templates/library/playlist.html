@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${playlist.title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="playlist-layout">
+            <div class="playlist-hero" th:style="'--c:' + ${playlist.color}">
+                <div class="cover">
+                    <img th:if="${!items.isEmpty()}" th:src="${items[0].video.thumbnailUrl}" alt="">
+                    <span th:if="${items.isEmpty()}" class="ccard-ico" style="width:64px;height:64px"><i th:attr="data-lucide=${playlist.icon}"></i></span>
+                </div>
+                <span class="badge badge-violet" style="margin-bottom:12px" th:text="${playlist.collection} ? 'Коллекция' : 'Плейлист'"></span>
+                <h1 th:text="${playlist.title}"></h1>
+                <a class="vwide-author" style="margin:0 0 10px" th:href="@{/channel/{u}(u=${playlist.owner.username})}">
+                    <th:block th:replace="~{fragments/layout :: avatar(${playlist.owner}, 'xs')}"></th:block>
+                    <span th:text="${playlist.owner.displayName}"></span>
+                </a>
+                <p class="dim" style="font-weight:600;font-size:13.5px;margin-bottom:12px">
+                    <th:block th:text="${items.size()} + ' видео'"></th:block> •
+                    <th:block th:text="${playlist.publicVisible} ? 'Публичный' : 'Приватный'"></th:block> •
+                    обновлён <th:block th:text="${@fmt.ago(playlist.updatedAt)}"></th:block>
+                </p>
+                <p class="muted" th:if="${playlist.description != null}" th:text="${playlist.description}" style="margin-bottom:16px;white-space:pre-wrap"></p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <a class="btn btn-white" th:if="${!items.isEmpty()}" th:href="@{/watch/{id}(id=${items[0].video.id},list=${playlist.id})}"><i data-lucide="play"></i>Воспроизвести</a>
+                    <button class="btn btn-icon" type="button" id="sharePl" title="Скопировать ссылку"><i data-lucide="share-2"></i></button>
+                    <th:block th:if="${owner}">
+                        <button class="btn btn-icon" type="button" id="editPl" title="Изменить"><i data-lucide="pencil"></i></button>
+                        <form th:action="@{/playlists/{id}/delete(id=${playlist.id})}" method="post" data-confirm="Удалить безвозвратно?">
+                            <button class="btn btn-icon btn-danger" type="submit" title="Удалить"><i data-lucide="trash-2"></i></button>
+                        </form>
+                    </th:block>
+                </div>
+                <form th:if="${owner}" id="editForm" hidden th:action="@{/playlists/{id}(id=${playlist.id})}" method="post" style="margin-top:18px">
+                    <div class="field"><label class="label">Название</label><input class="input" name="title" th:value="${playlist.title}" maxlength="80" required></div>
+                    <div class="field"><label class="label">Описание</label><textarea class="textarea" name="description" maxlength="500" style="min-height:70px" th:text="${playlist.description}"></textarea></div>
+                    <div class="field">
+                        <span class="label">Цвет</span>
+                        <div class="color-picker">
+                            <label th:each="c : ${ {'#8b5cf6','#3b6bff','#22d3ee','#22c55e','#f59e0b','#f43f5e','#ec4899','#a3a3a3'} }">
+                                <input type="radio" name="color" th:value="${c}" th:checked="${c == playlist.color}"><span th:style="'--c:' + ${c}"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="field" th:if="${playlist.collection}">
+                        <span class="label">Иконка</span>
+                        <div class="icon-picker" style="grid-template-columns:repeat(5,1fr)">
+                            <label th:each="ic : ${icons}"><input type="radio" name="icon" th:value="${ic}" th:checked="${ic == playlist.icon}"><span><i th:attr="data-lucide=${ic}"></i></span></label>
+                        </div>
+                    </div>
+                    <label class="switch" style="margin-bottom:16px"><input type="checkbox" name="publicVisible" value="true" th:checked="${playlist.publicVisible}">Публичный</label>
+                    <button class="btn btn-primary btn-sm" type="submit">Сохранить</button>
+                </form>
+            </div>
+
+            <div>
+                <div class="vlist" th:if="${!items.isEmpty()}">
+                    <div class="playlist-item" th:each="it, st : ${items}">
+                        <span class="vrow-index" th:text="${st.count}">1</span>
+                        <a th:replace="~{fragments/cards :: row(${it.video}, ${'/watch/' + it.video.id + '?list=' + playlist.id}, false)}"></a>
+                        <th:block th:if="${owner}">
+                            <form th:action="@{/playlists/{id}/move/{item}(id=${playlist.id},item=${it.id})}" method="post" th:unless="${st.first or playlist.collection}">
+                                <input type="hidden" name="dir" value="-1"><button class="btn btn-ghost btn-icon btn-sm" title="Выше"><i data-lucide="arrow-up"></i></button>
+                            </form>
+                            <form th:action="@{/playlists/{id}/move/{item}(id=${playlist.id},item=${it.id})}" method="post" th:unless="${st.last or playlist.collection}">
+                                <input type="hidden" name="dir" value="1"><button class="btn btn-ghost btn-icon btn-sm" title="Ниже"><i data-lucide="arrow-down"></i></button>
+                            </form>
+                            <form th:action="@{/playlists/{id}/remove/{vid}(id=${playlist.id},vid=${it.video.id})}" method="post">
+                                <button class="btn btn-ghost btn-icon btn-sm" title="Убрать"><i data-lucide="x"></i></button>
+                            </form>
+                        </th:block>
+                    </div>
+                </div>
+                <div class="empty" th:if="${items.isEmpty()}">
+                    <div class="empty-icon"><i th:attr="data-lucide=${playlist.icon}"></i></div>
+                    <h3>Здесь пока нет видео</h3>
+                    <p>Нажмите «Сохранить» под любым видео и выберите эту подборку.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+    (function () {
+        const e = document.getElementById('editPl'), f = document.getElementById('editForm');
+        if (e && f) e.addEventListener('click', () => { f.hidden = !f.hidden; });
+        document.getElementById('sharePl').addEventListener('click', async () => {
+            try { await navigator.clipboard.writeText(location.href); VYBE.toast('Ссылка скопирована'); }
+            catch (err) { VYBE.toast(location.href); }
+        });
+    })();
+</script>
+</body>
+</html>

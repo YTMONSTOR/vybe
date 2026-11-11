@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${channel.displayName})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="channel-banner" th:style="'--h:' + ${channel.hue}">
+            <img th:if="${channel.bannerUrl != null}" th:src="${channel.bannerUrl}" alt="">
+        </div>
+        <div class="channel-head">
+            <th:block th:replace="~{fragments/layout :: avatar(${channel}, 'xl')}"></th:block>
+            <div class="channel-info">
+                <h1><th:block th:text="${channel.displayName}"></th:block><i data-lucide="badge-check" th:if="${channel.admin or channel.subscriberCount >= 1000}"></i></h1>
+                <div class="channel-stats">
+                    <span th:text="'@' + ${channel.username}"></span>
+                    <span><b id="subsLabel" th:text="${@fmt.subscribers(channel.subscriberCount)}"></b></span>
+                    <span><b th:text="${videoCount}"></b> видео</span>
+                    <span><b th:text="${@fmt.compact(totalViews)}"></b> просмотров</span>
+                </div>
+                <p class="channel-bio" th:if="${channel.bio != null and !channel.bio.isBlank()}" th:text="${channel.bio}"></p>
+                <span class="badge badge-red" th:if="${!channel.enabled}"><i data-lucide="ban"></i>Канал заблокирован</span>
+            </div>
+            <div class="channel-actions">
+                <th:block th:if="${owner}">
+                    <a class="btn" th:href="@{/settings}"><i data-lucide="pen-line"></i>Настроить канал</a>
+                    <a class="btn btn-primary" th:href="@{/studio}"><i data-lucide="layout-dashboard"></i>Studio</a>
+                </th:block>
+                <button th:unless="${owner}" class="btn btn-primary btn-subscribe" id="btnSubscribe" type="button"
+                        th:classappend="${subscribed} ? 'subscribed'" th:attr="data-channel=${channel.id}">
+                    <i th:attr="data-lucide=${subscribed} ? 'bell-ring' : 'bell-plus'"></i>
+                    <span th:text="${subscribed} ? 'Вы подписаны' : 'Подписаться'"></span>
+                </button>
+            </div>
+        </div>
+
+        <nav class="tabs">
+            <a class="tab" th:classappend="${tab == 'videos'} ? 'active'" th:href="@{/channel/{u}(u=${channel.username})}"><i data-lucide="play"></i>Видео</a>
+            <a class="tab" th:classappend="${tab == 'playlists'} ? 'active'" th:href="@{/channel/{u}(u=${channel.username},tab='playlists')}"><i data-lucide="list-video"></i>Плейлисты и коллекции</a>
+            <a class="tab" th:classappend="${tab == 'about'} ? 'active'" th:href="@{/channel/{u}(u=${channel.username},tab='about')}"><i data-lucide="info"></i>О канале</a>
+        </nav>
+
+        <th:block th:if="${tab == 'videos'}">
+            <div class="featured" th:if="${featured != null and videos.size() > 2}">
+                <article th:replace="~{fragments/cards :: video(${featured}, 'Самое популярное', 0)}"></article>
+                <div>
+                    <span class="badge badge-violet" style="margin-bottom:12px"><i data-lucide="star"></i>Главное на канале</span>
+                    <h2 th:text="${featured.title}"></h2>
+                    <p class="dim" style="font-weight:600;margin-bottom:10px" th:text="${@fmt.views(featured.views)} + ' • ' + ${@fmt.ago(featured.createdAt)}"></p>
+                    <p class="muted" style="display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden" th:text="${featured.description}"></p>
+                </div>
+            </div>
+            <div class="toolbar" th:if="${!videos.isEmpty()}">
+                <div class="segmented">
+                    <a th:classappend="${sort != 'popular'} ? 'active'" th:href="@{/channel/{u}(u=${channel.username})}">Новые</a>
+                    <a th:classappend="${sort == 'popular'} ? 'active'" th:href="@{/channel/{u}(u=${channel.username},sort='popular')}">Популярные</a>
+                </div>
+            </div>
+            <div class="grid-videos dense stagger" th:if="${!videos.isEmpty()}">
+                <th:block th:each="v : ${videos}">
+                    <article th:replace="~{fragments/cards :: video(${v}, null, 0)}"></article>
+                </th:block>
+            </div>
+            <div class="empty" th:if="${videos.isEmpty()}">
+                <div class="empty-icon"><i data-lucide="clapperboard"></i></div>
+                <h3>Здесь пока нет видео</h3>
+                <p th:text="${owner} ? 'Загрузите первое видео — оно появится на вашем канале.' : 'Автор ещё ничего не опубликовал.'"></p>
+                <a class="btn btn-primary" th:if="${owner}" th:href="@{/upload}"><i data-lucide="upload"></i>Загрузить видео</a>
+            </div>
+        </th:block>
+
+        <th:block th:if="${tab == 'playlists'}">
+            <div class="grid-playlists" th:if="${!playlists.isEmpty()}">
+                <th:block th:each="p : ${playlists}">
+                    <th:block th:if="${p.collection}"><a th:replace="~{fragments/cards :: collection(${p})}"></a></th:block>
+                    <th:block th:unless="${p.collection}"><a th:replace="~{fragments/cards :: playlist(${p})}"></a></th:block>
+                </th:block>
+            </div>
+            <div class="empty" th:if="${playlists.isEmpty()}">
+                <div class="empty-icon"><i data-lucide="list-video"></i></div>
+                <h3>Нет публичных плейлистов</h3>
+                <p>Плейлисты и коллекции канала появятся здесь.</p>
+            </div>
+        </th:block>
+
+        <div class="about-grid" th:if="${tab == 'about'}">
+            <div class="panel">
+                <h3>Описание</h3>
+                <p class="muted" style="white-space:pre-wrap" th:text="${channel.bio != null and !channel.bio.isBlank()} ? ${channel.bio} : 'Автор пока не рассказал о себе.'"></p>
+            </div>
+            <div class="panel">
+                <h3>Статистика</h3>
+                <div class="stat-list">
+                    <div><i data-lucide="calendar"></i>На VYBE с <th:block th:text="${@fmt.date(channel.createdAt)}"></th:block></div>
+                    <div><i data-lucide="eye"></i><th:block th:text="${@fmt.number(totalViews)}"></th:block> просмотров</div>
+                    <div><i data-lucide="users"></i><th:block th:text="${@fmt.subscribers(channel.subscriberCount)}"></th:block></div>
+                    <div><i data-lucide="film"></i><th:block th:text="${videoCount}"></th:block> публичных видео</div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+    (function () {
+        const btn = document.getElementById('btnSubscribe');
+        if (!btn) return;
+        btn.addEventListener('click', async () => {
+            if (!VYBE.requireLogin()) return;
+            try {
+                const r = await VYBE.api('/api/channels/' + btn.dataset.channel + '/subscribe', { method: 'POST' });
+                btn.classList.toggle('subscribed', r.active);
+                btn.innerHTML = '<i data-lucide="' + (r.active ? 'bell-ring' : 'bell-plus') + '"></i><span>' + (r.active ? 'Вы подписаны' : 'Подписаться') + '</span>';
+                VYBE.icons(btn);
+                document.getElementById('subsLabel').textContent = r.label;
+            } catch (e) { VYBE.toast(e.message, 'error'); }
+        });
+    })();
+</script>
+</body>
+</html>

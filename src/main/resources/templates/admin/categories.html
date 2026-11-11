@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Категории — Админ')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="studio">
+            <nav th:replace="~{fragments/panels :: adminNav}"></nav>
+            <div>
+                <div class="page-head"><div><h1 class="page-title">Категории</h1><p class="page-sub">Иконки — названия из библиотеки <a href="https://lucide.dev/icons" target="_blank" rel="noopener" style="color:var(--violet-2)">Lucide</a></p></div></div>
+                <form class="panel" th:action="@{/admin/categories}" method="post" style="margin-bottom:24px">
+                    <h3>Новая категория</h3>
+                    <div style="display:grid;grid-template-columns:2fr 1.3fr 90px 90px auto;gap:12px;align-items:end">
+                        <div class="field" style="margin:0"><label class="label">Название</label><input class="input" name="name" maxlength="50" required></div>
+                        <div class="field" style="margin:0"><label class="label">Иконка</label><input class="input" name="icon" value="folder" pattern="[a-z0-9-]+"></div>
+                        <div class="field" style="margin:0"><label class="label">Цвет</label><input class="input" type="color" name="color" value="#8b5cf6" style="padding:4px;height:46px"></div>
+                        <div class="field" style="margin:0"><label class="label">Порядок</label><input class="input" type="number" name="sortOrder" value="0"></div>
+                        <button class="btn btn-primary" type="submit" style="height:46px"><i data-lucide="plus"></i>Добавить</button>
+                    </div>
+                </form>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr><th></th><th>Название</th><th>Slug</th><th>Иконка</th><th>Цвет</th><th>Порядок</th><th></th></tr></thead>
+                        <tbody>
+                        <tr th:each="c : ${categories}">
+                            <td><span class="pl-ico" th:style="'--c:' + ${c.color}"><i th:attr="data-lucide=${c.icon}"></i></span></td>
+                            <td colspan="5">
+                                <form th:action="@{/admin/categories}" method="post" style="display:grid;grid-template-columns:2fr 1fr 1.2fr 70px 70px auto;gap:10px;align-items:center" th:id="'cat' + ${c.id}">
+                                    <input type="hidden" name="id" th:value="${c.id}">
+                                    <input class="input" name="name" th:value="${c.name}" maxlength="50" required style="padding:8px 12px">
+                                    <span class="dim" th:text="${c.slug}"></span>
+                                    <input class="input" name="icon" th:value="${c.icon}" style="padding:8px 12px">
+                                    <input class="input" type="color" name="color" th:value="${c.color}" style="padding:2px;height:38px">
+                                    <input class="input" type="number" name="sortOrder" th:value="${c.sortOrder}" style="padding:8px 10px">
+                                    <button class="btn btn-sm" type="submit"><i data-lucide="save"></i></button>
+                                </form>
+                            </td>
+                            <td>
+                                <form th:action="@{/admin/categories/{id}/delete(id=${c.id})}" method="post" data-confirm="Удалить категорию? Видео останутся без категории.">
+                                    <button class="btn btn-sm btn-icon btn-danger" type="submit"><i data-lucide="trash-2"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

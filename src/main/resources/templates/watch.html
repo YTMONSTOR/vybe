@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${video.title})}"></head>
+<body class="no-sidebar watch-page">
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="watch">
+            <div class="watch-main">
+
+                <!-- ================= Player ================= -->
+                <div class="player-wrap" id="playerWrap">
+                    <canvas class="ambient" id="ambient" width="32" height="18"></canvas>
+                    <div class="placeholder" id="playerPlaceholder">
+                        <span><i data-lucide="picture-in-picture-2"></i> Видео играет в плавающем плеере</span>
+                    </div>
+                    <div class="player" id="player" tabindex="0">
+                        <video id="video" th:src="${video.videoUrl}" th:poster="${video.thumbnailUrl}" preload="metadata" playsinline></video>
+                        <div class="player-shade"></div>
+                        <div class="player-top"><span class="p-title" th:text="${video.title}"></span></div>
+                        <button class="player-big" id="bigPlay" type="button" aria-label="Воспроизвести"><i data-lucide="play"></i></button>
+                        <div class="player-flash" id="flash"></div>
+                        <div class="player-seek-hint left" id="hintLeft">−10 с</div>
+                        <div class="player-seek-hint right" id="hintRight">+10 с</div>
+                        <div class="player-spinner"></div>
+
+                        <div class="controls">
+                            <div class="progress" id="progress">
+                                <div class="progress-track" id="track">
+                                    <div class="progress-buffer" id="buffer"></div>
+                                    <div class="progress-hover" id="hoverBar"></div>
+                                    <div class="progress-fill" id="fill"></div>
+                                    <div class="progress-thumb" id="thumb"></div>
+                                </div>
+                                <div class="progress-tip" id="tip"></div>
+                            </div>
+                            <div class="controls-row">
+                                <button class="cbtn" id="btnPlay" type="button" title="Пауза (K)"><i data-lucide="play"></i></button>
+                                <a class="cbtn" id="btnNext" th:if="${nextVideo != null}" th:href="${nextUrl}" title="Следующее (Shift+N)"><i data-lucide="skip-forward"></i></a>
+                                <div class="volume">
+                                    <button class="cbtn" id="btnMute" type="button" title="Звук (M)"><i data-lucide="volume-2"></i></button>
+                                    <input type="range" id="volume" min="0" max="1" step="0.02" value="1" aria-label="Громкость">
+                                </div>
+                                <span class="time"><span id="cur">0:00</span> / <span id="dur">0:00</span><span class="chap hide-mobile" id="chapName"></span></span>
+                                <span class="spacer"></span>
+                                <button class="cbtn hide-mobile hide-floating" id="btnAutoplay" type="button" title="Автовоспроизведение"><i data-lucide="repeat"></i></button>
+                                <div style="position:relative" class="hide-floating">
+                                    <button class="cbtn" id="btnSpeed" type="button" title="Скорость"><i data-lucide="gauge"></i><span class="cbadge" id="speedBadge" hidden>1x</span></button>
+                                    <div class="speed-menu" id="speedMenu">
+                                        <div class="menu-title">Скорость</div>
+                                        <button type="button" data-speed="0.5">0.5×</button>
+                                        <button type="button" data-speed="0.75">0.75×</button>
+                                        <button type="button" data-speed="1" class="active">Обычная</button>
+                                        <button type="button" data-speed="1.25">1.25×</button>
+                                        <button type="button" data-speed="1.5">1.5×</button>
+                                        <button type="button" data-speed="1.75">1.75×</button>
+                                        <button type="button" data-speed="2">2×</button>
+                                    </div>
+                                </div>
+                                <button class="cbtn hide-floating" id="btnFocus" type="button" title="Focus Mode (T)"><i data-lucide="scan-eye"></i></button>
+                                <button class="cbtn hide-floating" id="btnMini" type="button" title="Мини-плеер (I)"><i data-lucide="picture-in-picture-2"></i></button>
+                                <button class="cbtn" id="btnFull" type="button" title="Во весь экран (F)"><i data-lucide="maximize"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= Info ================= -->
+                <h1 class="watch-title" th:text="${video.title}">Название</h1>
+
+                <div class="watch-bar">
+                    <div class="channel-line">
+                        <a th:href="@{/channel/{u}(u=${video.author.username})}">
+                            <th:block th:replace="~{fragments/layout :: avatar(${video.author}, 'md')}"></th:block>
+                        </a>
+                        <div>
+                            <a class="name" th:href="@{/channel/{u}(u=${video.author.username})}">
+                                <th:block th:text="${video.author.displayName}"></th:block>
+                                <i data-lucide="badge-check" th:if="${video.author.admin or video.author.subscriberCount >= 1000}"></i>
+                            </a>
+                            <div class="subs" id="subsLabel" th:text="${@fmt.subscribers(video.author.subscriberCount)}"></div>
+                        </div>
+                        <button class="btn btn-primary btn-subscribe" id="btnSubscribe" type="button" th:unless="${isAuthor}"
+                                th:classappend="${subscribed} ? 'subscribed'" th:attr="data-channel=${video.author.id}">
+                            <i th:attr="data-lucide=${subscribed} ? 'bell-ring' : 'bell-plus'"></i>
+                            <span th:text="${subscribed} ? 'Вы подписаны' : 'Подписаться'">Подписаться</span>
+                        </button>
+                        <a class="btn" th:if="${canEdit}" th:href="@{/studio/videos/{id}(id=${video.id})}"><i data-lucide="pencil"></i>Изменить</a>
+                    </div>
+
+                    <div class="watch-actions">
+                        <div class="react-group">
+                            <button class="btn" id="btnLike" type="button" th:classappend="${reaction == 'LIKE'} ? 'active'" title="Нравится">
+                                <i data-lucide="thumbs-up"></i><span id="likeCount" th:text="${@fmt.compact(video.likes)}">0</span>
+                            </button>
+                            <button class="btn" id="btnDislike" type="button" th:classappend="${reaction == 'DISLIKE'} ? 'active'" title="Не нравится">
+                                <i data-lucide="thumbs-down"></i><span id="dislikeCount" th:text="${@fmt.compact(video.dislikes)}">0</span>
+                            </button>
+                        </div>
+                        <button class="btn" id="btnShare" type="button"><i data-lucide="share-2"></i><span class="hide-mobile">Поделиться</span></button>
+                        <button class="btn" id="btnFav" type="button" th:classappend="${favorite} ? 'active'"><i data-lucide="bookmark"></i><span class="hide-mobile" th:text="${favorite} ? 'В избранном' : 'В избранное'">В избранное</span></button>
+                        <button class="btn" id="btnSave" type="button"><i data-lucide="list-plus"></i><span class="hide-mobile">Сохранить</span></button>
+                        <form th:action="@{/together}" method="post" style="display:contents" th:if="${me != null and video.visibility.name() != 'PRIVATE'}">
+                            <input type="hidden" name="videoId" th:value="${video.id}">
+                            <button class="btn" type="submit" title="Смотреть вместе"><i data-lucide="users"></i><span class="hide-mobile">Вместе</span></button>
+                        </form>
+                        <span id="nextData" hidden th:if="${nextVideo != null}" th:data-id="${nextVideo.id}" th:data-title="${nextVideo.title}"
+                              th:data-thumb="${nextVideo.thumbnailUrl}" th:data-url="${nextUrl}"></span>
+                        <button class="btn btn-icon" id="btnReport" type="button" th:unless="${isAuthor}" title="Пожаловаться"><i data-lucide="flag"></i></button>
+                    </div>
+                </div>
+
+                <div class="desc-box" id="descBox">
+                    <div class="desc-meta">
+                        <span th:text="${@fmt.views(video.views)}" id="viewsLabel"></span>
+                        <span th:text="${@fmt.date(video.createdAt)}"></span>
+                        <a class="tag" th:if="${video.category != null}" th:href="@{/explore/{s}(s=${video.category.slug})}" th:text="${video.category.name}"></a>
+                        <span class="badge" th:if="${video.visibility.name() == 'UNLISTED'}"><i data-lucide="link"></i>По ссылке</span>
+                        <span class="badge badge-amber" th:if="${video.visibility.name() == 'PRIVATE'}"><i data-lucide="lock"></i>Приватное</span>
+                    </div>
+                    <div class="desc-text" id="descText" th:text="${video.description != null and !video.description.isBlank()} ? ${video.description} : 'Автор не добавил описание.'"></div>
+                    <div class="desc-tags" th:if="${!video.tags.isEmpty()}">
+                        <a class="tag" th:each="t : ${video.tags}" th:href="@{/search(q='#' + ${t.name})}" th:text="'#' + ${t.name}"></a>
+                    </div>
+                    <button class="desc-toggle" id="descToggle" type="button">Ещё</button>
+                </div>
+
+                <!-- Chapters -->
+                <section class="chapters" th:if="${!video.chapters.isEmpty()}">
+                    <div class="chapters-head">
+                        <span><i data-lucide="list-ordered"></i>Главы · <th:block th:text="${video.chapters.size()}"></th:block></span>
+                    </div>
+                    <div class="chapters-list" id="chapters">
+                        <button class="chapter" type="button" th:each="c : ${video.chapters}" th:attr="data-start=${c.startSeconds}">
+                            <time th:text="${@fmt.timestamp(c.startSeconds)}">0:00</time>
+                            <b th:text="${c.title}">Глава</b>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Comments -->
+                <section class="comments" id="comments">
+                    <div class="comments-head">
+                        <h3><span id="commentTotal" th:text="${video.commentCount}">0</span> <th:block th:text="${@fmt.plural(video.commentCount, 'комментарий', 'комментария', 'комментариев')}"></th:block></h3>
+                    </div>
+                    <div th:if="${!video.commentsEnabled}" class="alert alert-info"><i data-lucide="message-square-off"></i>Автор отключил комментарии к этому видео.</div>
+                    <th:block th:if="${video.commentsEnabled}">
+                        <form class="comment-form" id="commentForm" th:if="${me != null}">
+                            <th:block th:replace="~{fragments/layout :: avatar(${me}, 'md')}"></th:block>
+                            <div class="grow">
+                                <textarea class="comment-input" name="text" rows="1" maxlength="2000" placeholder="Оставьте комментарий…"></textarea>
+                                <div class="comment-form-actions" hidden>
+                                    <button class="btn btn-ghost btn-sm" type="button" data-cancel>Отмена</button>
+                                    <button class="btn btn-primary btn-sm" type="submit">Отправить</button>
+                                </div>
+                            </div>
+                        </form>
+                        <a th:if="${me == null}" class="alert alert-info" th:href="@{/login}"><i data-lucide="log-in"></i>Войдите, чтобы оставить комментарий.</a>
+                    </th:block>
+                    <div id="commentList"></div>
+                    <div id="commentSkeleton">
+                        <div class="sk-row" style="margin-bottom:22px" th:each="i : ${#numbers.sequence(1, 3)}">
+                            <div class="skeleton sk-circle" style="width:44px;height:44px"></div>
+                            <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+                                <div class="skeleton sk-line" style="width:30%"></div>
+                                <div class="skeleton sk-line" style="width:85%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn" id="moreComments" type="button" hidden>Показать ещё</button>
+                </section>
+            </div>
+
+            <!-- ================= Aside ================= -->
+            <aside class="watch-aside">
+                <div class="aside-card" th:if="${playlist != null}" th:style="'--c:' + ${playlist.color}">
+                    <div class="aside-head">
+                        <div>
+                            <b th:text="${playlist.title}">Плейлист</b>
+                            <div class="dim" style="font-size:12.5px;font-weight:600">
+                                <th:block th:text="${playlist.owner.displayName}"></th:block> •
+                                <th:block th:text="${playlistIndex + 1} + ' / ' + ${playlistVideos.size()}"></th:block>
+                            </div>
+                        </div>
+                        <a class="btn btn-sm btn-ghost" th:href="@{/playlist/{id}(id=${playlist.id})}"><i data-lucide="list-video"></i></a>
+                    </div>
+                    <div class="aside-body">
+                        <th:block th:each="pv, st : ${playlistVideos}">
+                            <a th:replace="~{fragments/cards :: row(${pv}, ${'/watch/' + pv.id + '?list=' + playlist.id}, ${pv.id == video.id})}"></a>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div class="section-head focus-hide" style="margin-bottom:12px">
+                    <h3 class="section-title" style="font-size:16px"><i data-lucide="sparkles"></i>Рекомендуем</h3>
+                </div>
+                <div class="vlist" style="gap:6px">
+                    <th:block th:each="r : ${related}">
+                        <a th:replace="~{fragments/cards :: row(${r}, ${'/watch/' + r.id}, false)}"></a>
+                    </th:block>
+                    <div class="empty" th:if="${related.isEmpty()}" style="padding:30px 16px">
+                        <p style="margin:0">Похожих видео пока нет</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+        <button class="btn btn-glass focus-exit" id="focusExit" type="button"><i data-lucide="minimize-2"></i>Выйти из Focus Mode</button>
+    </main>
+</div>
+
+<!-- Report dialog template -->
+<template id="reportTpl">
+    <div class="modal-head"><h3>Пожаловаться на видео</h3><button class="btn btn-ghost btn-icon btn-sm" data-close type="button"><i data-lucide="x"></i></button></div>
+    <form id="reportForm">
+        <div class="radio-list">
+            <label class="radio" th:each="r, st : ${reportReasons}">
+                <input type="radio" name="reason" th:value="${r.name()}" th:checked="${st.first}"><span th:text="${r.label}"></span>
+            </label>
+        </div>
+        <div class="field">
+            <label class="label">Подробности (необязательно)</label>
+            <textarea class="textarea" name="details" maxlength="1000" style="min-height:80px"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" type="button" data-close>Отмена</button>
+            <button class="btn btn-danger" type="submit"><i data-lucide="flag"></i>Отправить</button>
+        </div>
+    </form>
+</template>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:inline="javascript">
+    window.VYBE_VIDEO = {
+        id: /*[[${video.id}]]*/ 0,
+        title: /*[[${video.title}]]*/ '',
+        author: /*[[${video.author.displayName}]]*/ '',
+        src: /*[[${video.videoUrl}]]*/ '',
+        startAt: /*[[${startAt}]]*/ 0,
+        duration: /*[[${video.durationSeconds}]]*/ 0,
+        reaction: /*[[${reaction}]]*/ 'NONE',
+        loggedIn: /*[[${me != null}]]*/ false
+    };
+</script>
+<script th:src="@{/js/player.js}"></script>
+</body>
+</html>

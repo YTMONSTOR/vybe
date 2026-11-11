@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- ============================== HEAD ============================== -->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#060608">
+    <meta name="_csrf" th:content="${_csrf != null} ? ${_csrf.token} : ''">
+    <meta name="_csrf_header" th:content="${_csrf != null} ? ${_csrf.headerName} : 'X-CSRF-TOKEN'">
+    <title th:text="${title} + ' — VYBE'">VYBE</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/logo.svg}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/vybe.css}">
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('vybe.sidebar') === 'collapsed') document.documentElement.classList.add('pre-collapsed');
+            } catch (e) {}
+        })();
+    </script>
+</head>
+
+<!-- ============================== TOPBAR ============================== -->
+<header th:fragment="topbar" class="topbar">
+    <div class="topbar-left">
+        <button class="btn btn-ghost btn-icon" id="menuToggle" type="button" aria-label="Меню"><i data-lucide="menu"></i></button>
+        <a class="logo" th:href="@{/}" aria-label="VYBE — на главную">
+            <span class="logo-mark"><i data-lucide="play"></i></span>
+            <span class="logo-word">VYBE</span>
+        </a>
+    </div>
+
+    <div class="search" id="search">
+        <form class="search-form" th:action="@{/search}" method="get" role="search" autocomplete="off">
+            <i data-lucide="search"></i>
+            <input class="search-input" type="search" name="q" id="searchInput" maxlength="100"
+                   placeholder="Поиск видео, тегов и каналов" th:value="${q}" aria-label="Поиск">
+            <span class="search-kbd">/</span>
+            <button class="search-submit" type="submit" aria-label="Найти"><i data-lucide="arrow-right"></i></button>
+        </form>
+        <div class="suggest" id="suggest" hidden></div>
+    </div>
+
+    <div class="topbar-right">
+        <th:block th:if="${me != null}">
+            <a class="btn btn-primary btn-upload" th:href="@{/upload}"><i data-lucide="plus"></i><span>Загрузить</span></a>
+            <div class="menu-wrap">
+                <button class="user-btn" type="button" id="userMenuBtn" aria-label="Меню профиля">
+                    <th:block th:replace="~{fragments/layout :: avatar(${me}, 'sm')}"></th:block>
+                </button>
+                <div class="menu" id="userMenu">
+                    <div class="menu-head">
+                        <th:block th:replace="~{fragments/layout :: avatar(${me}, 'md')}"></th:block>
+                        <div>
+                            <b th:text="${me.displayName}">Имя</b>
+                            <span class="dim" th:text="'@' + ${me.username}">@user</span>
+                        </div>
+                    </div>
+                    <a class="menu-item" th:href="@{/channel/{u}(u=${me.username})}"><i data-lucide="user-round"></i>Мой канал</a>
+                    <a class="menu-item" th:href="@{/studio}"><i data-lucide="layout-dashboard"></i>Creator Studio</a>
+                    <a class="menu-item" th:href="@{/collections}"><i data-lucide="layers"></i>Коллекции</a>
+                    <a class="menu-item" th:href="@{/settings}"><i data-lucide="settings"></i>Настройки</a>
+                    <a class="menu-item" th:if="${me.admin}" th:href="@{/admin}"><i data-lucide="shield"></i>Админ-панель</a>
+                    <div class="menu-sep"></div>
+                    <form th:action="@{/logout}" method="post">
+                        <button class="menu-item danger" type="submit"><i data-lucide="log-out"></i>Выйти</button>
+                    </form>
+                </div>
+            </div>
+        </th:block>
+        <th:block th:if="${me == null}">
+            <a class="btn btn-ghost hide-mobile" th:href="@{/register}">Регистрация</a>
+            <a class="btn btn-primary" th:href="@{/login}"><i data-lucide="log-in"></i>Войти</a>
+        </th:block>
+    </div>
+</header>
+
+<!-- ============================== SIDEBAR ============================== -->
+<aside th:fragment="sidebar" class="sidebar" id="sidebar">
+    <nav class="nav-section">
+        <a class="nav-item" th:classappend="${path == '/'} ? 'active'" th:href="@{/}"><i data-lucide="house"></i><span class="nav-label">Главная</span></a>
+        <a class="nav-item" th:classappend="${path == '/trending'} ? 'active'" th:href="@{/trending}"><i data-lucide="flame"></i><span class="nav-label">В тренде</span></a>
+        <a class="nav-item" th:classappend="${path == '/subscriptions'} ? 'active'" th:href="@{/subscriptions}"><i data-lucide="tv"></i><span class="nav-label">Подписки</span></a>
+        <a class="nav-item" th:classappend="${path == '/collections'} ? 'active'" th:href="@{/collections}"><i data-lucide="layers"></i><span class="nav-label">Коллекции</span></a>
+    </nav>
+    <nav class="nav-section">
+        <div class="nav-title">Библиотека</div>
+        <a class="nav-item" th:classappend="${path == '/history'} ? 'active'" th:href="@{/history}"><i data-lucide="history"></i><span class="nav-label">История</span></a>
+        <a class="nav-item" th:classappend="${path == '/favorites'} ? 'active'" th:href="@{/favorites}"><i data-lucide="bookmark"></i><span class="nav-label">Избранное</span></a>
+        <a class="nav-item" th:classappend="${path == '/liked'} ? 'active'" th:href="@{/liked}"><i data-lucide="thumbs-up"></i><span class="nav-label">Понравившиеся</span></a>
+        <a class="nav-item" th:classappend="${path == '/playlists'} ? 'active'" th:href="@{/playlists}"><i data-lucide="list-video"></i><span class="nav-label">Плейлисты</span></a>
+    </nav>
+    <nav class="nav-section" th:if="${me != null}">
+        <div class="nav-title">Автору</div>
+        <a class="nav-item" th:classappend="${path != null and path.startsWith('/studio')} ? 'active'" th:href="@{/studio}"><i data-lucide="layout-dashboard"></i><span class="nav-label">Creator Studio</span></a>
+        <a class="nav-item" th:classappend="${path == '/upload'} ? 'active'" th:href="@{/upload}"><i data-lucide="upload"></i><span class="nav-label">Загрузить видео</span></a>
+        <a class="nav-item" th:if="${me.admin}" th:classappend="${path != null and path.startsWith('/admin')} ? 'active'" th:href="@{/admin}">
+            <i data-lucide="shield"></i><span class="nav-label">Админ-панель</span>
+            <span class="count" th:if="${openReports > 0}" th:text="${openReports}">1</span>
+        </a>
+    </nav>
+    <nav class="nav-section collapsible" th:if="${navSubscriptions != null and !navSubscriptions.isEmpty()}">
+        <div class="nav-title">Подписки</div>
+        <a class="nav-item" th:each="ch, st : ${navSubscriptions}" th:if="${st.index < 8}"
+           th:href="@{/channel/{u}(u=${ch.username})}">
+            <th:block th:replace="~{fragments/layout :: avatar(${ch}, 'xs')}"></th:block>
+            <span class="nav-label" th:text="${ch.displayName}">Канал</span>
+        </a>
+    </nav>
+    <nav class="nav-section collapsible" th:if="${navCategories != null and !navCategories.isEmpty()}">
+        <div class="nav-title">Категории</div>
+        <a class="nav-item" th:each="c : ${navCategories}" th:href="@{/explore/{s}(s=${c.slug})}"
+           th:classappend="${path == '/explore/' + c.slug} ? 'active'">
+            <i th:attr="data-lucide=${c.icon}"></i><span class="nav-label" th:text="${c.name}">Категория</span>
+        </a>
+    </nav>
+    <div class="sidebar-foot">
+        <div><b class="grad-text">VYBE</b> — видео нового поколения</div>
+        <div>© 2026 VYBE Platform</div>
+    </div>
+</aside>
+
+<!-- ============================== AVATAR ============================== -->
+<span th:fragment="avatar(u, size)" class="avatar" th:classappend="'avatar-' + ${size}" th:style="'--h:' + ${u.hue}">
+    <img th:if="${u.avatarUrl != null}" th:src="${u.avatarUrl}" alt="" loading="lazy">
+    <th:block th:if="${u.avatarUrl == null}" th:text="${u.initials}">AB</th:block>
+</span>
+
+<!-- ============================== SCRIPTS ============================== -->
+<th:block th:fragment="scripts">
+    <div class="scrim" id="scrim"></div>
+    <div class="toasts" id="toasts"></div>
+    <span id="flashToast" hidden th:if="${toast != null}" th:attr="data-message=${toast}"></span>
+    <script th:inline="javascript">
+        window.VYBE_ME = /*[[${me != null} ? ${me.username} : null]]*/ null;
+    </script>
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+</th:block>
+
+</body>
+</html>

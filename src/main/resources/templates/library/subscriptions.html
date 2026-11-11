@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Подписки')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="page-head">
+            <div>
+                <h1 class="page-title"><span class="title-icon"><i data-lucide="tv"></i></span>Подписки</h1>
+                <p class="page-sub" th:text="${channels.size()} + ' ' + ${@fmt.plural(channels.size(), 'канал', 'канала', 'каналов')}"></p>
+            </div>
+        </div>
+        <section class="section" th:if="${!channels.isEmpty()}">
+            <div class="chips">
+                <a class="chip" th:each="ch : ${channels}" th:href="@{/channel/{u}(u=${ch.username})}" style="height:44px;padding-left:6px">
+                    <th:block th:replace="~{fragments/layout :: avatar(${ch}, 'sm')}"></th:block>
+                    <th:block th:text="${ch.displayName}"></th:block>
+                </a>
+            </div>
+        </section>
+        <section class="section" th:if="${!videos.isEmpty()}">
+            <div class="section-head"><h2 class="section-title"><i data-lucide="bell-ring"></i>Новые видео</h2></div>
+            <div class="grid-videos stagger">
+                <th:block th:each="v : ${videos}">
+                    <article th:replace="~{fragments/cards :: video(${v}, null, 0)}"></article>
+                </th:block>
+            </div>
+        </section>
+        <div class="empty" th:if="${videos.isEmpty()}">
+            <div class="empty-icon"><i data-lucide="bell-plus"></i></div>
+            <h3 th:text="${channels.isEmpty()} ? 'Вы ещё ни на кого не подписаны' : 'Новых видео пока нет'"></h3>
+            <p>Подписывайтесь на авторов — их новые видео будут собираться здесь и в Smart Feed.</p>
+            <a class="btn btn-primary" th:href="@{/trending}"><i data-lucide="flame"></i>Найти авторов в трендах</a>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Watch Together')}"></head>
+<body class="no-sidebar">
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="together">
+            <div style="min-width:0">
+                <div class="player" id="tPlayer" style="max-height:calc(100vh - 220px)">
+                    <video id="tVideo" th:src="${room.video.url()}" th:poster="${room.video.thumbnail()}" playsinline controls preload="auto"></video>
+                </div>
+                <div class="room-bar">
+                    <div>
+                        <h1 class="watch-title" style="margin:0 0 6px" id="tTitle" th:text="${room.video.title()}"></h1>
+                        <span class="dim" style="font-weight:600" id="tAuthor" th:text="${room.video.author()}"></span>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                        <div class="members" id="members"></div>
+                        <span class="room-code"><span class="live-dot"></span><span th:text="${room.code}"></span>
+                            <button class="btn btn-sm btn-primary" id="inviteBtn" type="button"><i data-lucide="link"></i>Пригласить</button></span>
+                    </div>
+                </div>
+                <div class="alert alert-info" id="syncNote"><i data-lucide="radio"></i><span>Воспроизведение, пауза и перемотка синхронизируются у всех участников комнаты. Ведущий: <b th:text="${room.hostName}"></b></span></div>
+                <section class="section" style="margin-top:28px">
+                    <div class="section-head"><h2 class="section-title"><i data-lucide="shuffle"></i>Сменить видео для всех</h2></div>
+                    <div class="together-videos">
+                        <button class="pick-video" type="button" th:each="v : ${suggestions}" th:attr="data-id=${v.id}">
+                            <img th:src="${v.thumbnailUrl}" alt="" loading="lazy">
+                            <b th:text="${v.title}"></b>
+                            <span class="dim" style="font-size:12.5px;font-weight:600" th:text="${v.author.displayName}"></span>
+                        </button>
+                    </div>
+                </section>
+            </div>
+            <aside class="chat">
+                <div class="chat-head"><b><i data-lucide="message-circle" style="vertical-align:-4px;margin-right:6px"></i>Чат комнаты</b><span class="badge" id="memberCount">1</span></div>
+                <div class="chat-log" id="chatLog"></div>
+                <div class="reactions-bar" id="reactions">
+                    <button type="button">🔥</button><button type="button">😂</button><button type="button">😮</button>
+                    <button type="button">❤️</button><button type="button">👏</button><button type="button">💜</button>
+                </div>
+                <form class="chat-form" id="chatForm">
+                    <input class="input" name="text" maxlength="500" placeholder="Написать сообщение…" autocomplete="off">
+                    <button class="btn btn-primary btn-icon" type="submit"><i data-lucide="send"></i></button>
+                </form>
+            </aside>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:inline="javascript">window.VYBE_ROOM = /*[[${room.code}]]*/ '';</script>
+<script th:src="@{/js/together.js}"></script>
+</body>
+</html>

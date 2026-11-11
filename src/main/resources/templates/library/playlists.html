@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${collectionMode} ? 'Коллекции' : 'Плейлисты')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="page-head">
+            <div>
+                <h1 class="page-title"><span class="title-icon"><i th:attr="data-lucide=${collectionMode} ? 'layers' : 'list-video'"></i></span>
+                    <th:block th:text="${collectionMode} ? 'Коллекции' : 'Плейлисты'"></th:block></h1>
+                <p class="page-sub" th:text="${collectionMode} ? 'Тематические доски: собирайте видео по идеям, настроению и проектам' : 'Упорядоченные подборки для просмотра подряд'"></p>
+            </div>
+            <div style="display:flex;gap:10px">
+                <a class="btn" th:href="${collectionMode} ? @{/playlists} : @{/collections}">
+                    <i th:attr="data-lucide=${collectionMode} ? 'list-video' : 'layers'"></i><th:block th:text="${collectionMode} ? 'Плейлисты' : 'Коллекции'"></th:block></a>
+                <button class="btn btn-primary" type="button" id="newBtn"><i data-lucide="plus"></i>Создать</button>
+            </div>
+        </div>
+
+        <form class="panel" id="newForm" hidden th:action="@{/playlists}" method="post" style="margin-bottom:28px;max-width:720px">
+            <input type="hidden" name="collection" th:value="${collectionMode}">
+            <h3 th:text="${collectionMode} ? 'Новая коллекция' : 'Новый плейлист'"></h3>
+            <div class="field"><label class="label">Название</label><input class="input" name="title" maxlength="80" required></div>
+            <div class="field"><label class="label">Описание</label><textarea class="textarea" name="description" maxlength="500" style="min-height:70px"></textarea></div>
+            <div class="field">
+                <span class="label">Цвет</span>
+                <div class="color-picker">
+                    <label th:each="c, st : ${ {'#8b5cf6','#3b6bff','#22d3ee','#22c55e','#f59e0b','#f43f5e','#ec4899','#a3a3a3'} }">
+                        <input type="radio" name="color" th:value="${c}" th:checked="${st.first}"><span th:style="'--c:' + ${c}"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="field" th:if="${collectionMode}">
+                <span class="label">Иконка</span>
+                <div class="icon-picker">
+                    <label th:each="ic, st : ${icons}"><input type="radio" name="icon" th:value="${ic}" th:checked="${ic == 'layers'}"><span><i th:attr="data-lucide=${ic}"></i></span></label>
+                </div>
+            </div>
+            <label class="switch" style="margin-bottom:18px"><input type="checkbox" name="publicVisible" value="true" checked>Показывать на моём канале</label>
+            <div style="display:flex;gap:10px"><button class="btn btn-primary" type="submit">Создать</button><button class="btn btn-ghost" type="button" id="cancelNew">Отмена</button></div>
+        </form>
+
+        <div class="grid-playlists" th:if="${!items.isEmpty()}">
+            <th:block th:each="p : ${items}">
+                <th:block th:if="${collectionMode}"><a th:replace="~{fragments/cards :: collection(${p})}"></a></th:block>
+                <th:block th:unless="${collectionMode}"><a th:replace="~{fragments/cards :: playlist(${p})}"></a></th:block>
+            </th:block>
+        </div>
+        <div class="empty" th:if="${items.isEmpty()}">
+            <div class="empty-icon"><i th:attr="data-lucide=${collectionMode} ? 'layers' : 'list-video'"></i></div>
+            <h3 th:text="${collectionMode} ? 'Коллекций пока нет' : 'Плейлистов пока нет'"></h3>
+            <p>Создайте первую подборку или нажмите «Сохранить» под любым видео.</p>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+    (function () {
+        const f = document.getElementById('newForm');
+        document.getElementById('newBtn').addEventListener('click', () => { f.hidden = false; f.title.focus(); });
+        document.getElementById('cancelNew').addEventListener('click', () => { f.hidden = true; });
+    })();
+</script>
+</body>
+</html>

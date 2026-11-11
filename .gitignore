@@ -1,0 +1,7 @@
+target/
+vybe-data/
+*.iml
+.idea/
+.vscode/
+.DS_Store
+*.log

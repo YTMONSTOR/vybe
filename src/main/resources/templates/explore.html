@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${category.name})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="welcome" th:style="'padding:38px 36px;background:radial-gradient(100% 140% at 0% 0%,' + ${category.color} + '55, transparent 60%), var(--surface)'">
+            <span class="hero-badge"><i th:attr="data-lucide=${category.icon}"></i>Категория</span>
+            <h1 th:text="${category.name}" style="margin-bottom:6px"></h1>
+            <p style="margin:0" th:text="${videos.size()} + ' ' + ${@fmt.plural(videos.size(), 'видео', 'видео', 'видео')} + ' в подборке'"></p>
+        </div>
+        <div class="toolbar">
+            <div class="segmented">
+                <a th:classappend="${sort != 'popular'} ? 'active'" th:href="@{/explore/{s}(s=${category.slug})}">Новые</a>
+                <a th:classappend="${sort == 'popular'} ? 'active'" th:href="@{/explore/{s}(s=${category.slug},sort='popular')}">Популярные</a>
+            </div>
+        </div>
+        <div class="grid-videos stagger" th:if="${!videos.isEmpty()}">
+            <th:block th:each="v : ${videos}">
+                <article th:replace="~{fragments/cards :: video(${v}, null, 0)}"></article>
+            </th:block>
+        </div>
+        <div class="empty" th:if="${videos.isEmpty()}">
+            <div class="empty-icon"><i th:attr="data-lucide=${category.icon}"></i></div>
+            <h3>В этой категории пока пусто</h3>
+            <p>Станьте первым автором в категории «<span th:text="${category.name}"></span>».</p>
+            <a class="btn btn-primary" th:href="@{/upload}"><i data-lucide="upload"></i>Загрузить видео</a>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

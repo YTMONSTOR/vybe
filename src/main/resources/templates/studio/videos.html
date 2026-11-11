@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Контент — Studio')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="studio">
+            <nav th:replace="~{fragments/panels :: studioNav}"></nav>
+            <div>
+                <div class="page-head">
+                    <div>
+                        <h1 class="page-title">Контент канала</h1>
+                        <p class="page-sub" th:text="${videos.size()} + ' видео'"></p>
+                    </div>
+                    <a class="btn btn-primary" th:href="@{/upload}"><i data-lucide="upload"></i>Загрузить</a>
+                </div>
+                <form class="toolbar" th:action="@{/studio/videos}" method="get">
+                    <input class="input" name="q" th:value="${q}" placeholder="Поиск по названию">
+                    <button class="btn" type="submit"><i data-lucide="search"></i>Найти</button>
+                </form>
+                <div class="table-wrap" th:if="${!videos.isEmpty()}">
+                    <table class="table">
+                        <thead><tr><th>Видео</th><th>Доступ</th><th>Дата</th><th class="num">Просмотры</th><th class="num">Лайки</th><th class="num">Комм.</th><th></th></tr></thead>
+                        <tbody>
+                        <tr th:each="v : ${videos}">
+                            <td>
+                                <a class="table-video" th:href="@{/studio/videos/{id}(id=${v.id})}">
+                                    <img th:src="${v.thumbnailUrl}" alt="" loading="lazy">
+                                    <span><b th:text="${v.title}"></b><small th:text="${@fmt.duration(v.durationSeconds)} + ' • ' + ${@fmt.bytes(v.fileSize)}"></small></span>
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge badge-green" th:if="${v.visibility.name() == 'PUBLIC'}"><i data-lucide="globe"></i>Публичное</span>
+                                <span class="badge badge-blue" th:if="${v.visibility.name() == 'UNLISTED'}"><i data-lucide="link"></i>По ссылке</span>
+                                <span class="badge badge-amber" th:if="${v.visibility.name() == 'PRIVATE'}"><i data-lucide="lock"></i>Приватное</span>
+                            </td>
+                            <td class="dim" style="white-space:nowrap" th:text="${@fmt.date(v.createdAt)}"></td>
+                            <td class="num" th:text="${@fmt.number(v.views)}"></td>
+                            <td class="num"><span th:text="${@fmt.number(v.likes)}"></span>
+                                <div class="ratio-bar"><span th:style="'width:' + ${v.likeRatio} + '%'"></span></div></td>
+                            <td class="num" th:text="${v.commentCount}"></td>
+                            <td>
+                                <div class="row-actions">
+                                    <a class="btn btn-sm btn-icon" th:href="@{/watch/{id}(id=${v.id})}" title="Смотреть"><i data-lucide="play"></i></a>
+                                    <a class="btn btn-sm btn-icon" th:href="@{/studio/videos/{id}(id=${v.id})}" title="Изменить"><i data-lucide="pencil"></i></a>
+                                    <a class="btn btn-sm btn-icon" th:href="@{/studio/comments(video=${v.id})}" title="Комментарии"><i data-lucide="message-square"></i></a>
+                                    <form th:action="@{/studio/videos/{id}/delete(id=${v.id})}" method="post" data-confirm="Удалить видео безвозвратно?">
+                                        <button class="btn btn-sm btn-icon btn-danger" type="submit" title="Удалить"><i data-lucide="trash-2"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="empty" th:if="${videos.isEmpty()}">
+                    <div class="empty-icon"><i data-lucide="clapperboard"></i></div>
+                    <h3 th:text="${q != null and !q.isEmpty()} ? 'Ничего не найдено' : 'На канале пока нет видео'"></h3>
+                    <p>Загрузите видео — здесь появится управление контентом.</p>
+                    <a class="btn btn-primary" th:href="@{/upload}"><i data-lucide="upload"></i>Загрузить</a>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

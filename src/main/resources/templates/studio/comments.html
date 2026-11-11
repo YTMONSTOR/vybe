@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Комментарии — Studio')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main">
+        <div class="studio">
+            <nav th:replace="~{fragments/panels :: studioNav}"></nav>
+            <div>
+                <div class="page-head">
+                    <div>
+                        <h1 class="page-title">Комментарии</h1>
+                        <p class="page-sub" th:text="'Всего: ' + ${comments.totalElements}"></p>
+                    </div>
+                </div>
+                <form class="toolbar" th:action="@{/studio/comments}" method="get">
+                    <select class="select" name="video" style="width:auto;max-width:420px" onchange="this.form.submit()">
+                        <option value="">Все видео</option>
+                        <option th:each="v : ${videos}" th:value="${v.id}" th:text="${v.title}" th:selected="${videoFilter == v.id}"></option>
+                    </select>
+                </form>
+                <div class="list-card" th:if="${!comments.isEmpty()}">
+                    <div class="mini-comment" th:each="c : ${comments}" style="align-items:flex-start">
+                        <th:block th:replace="~{fragments/layout :: avatar(${c.author}, 'md')}"></th:block>
+                        <div style="flex:1;min-width:0">
+                            <small><b th:text="${c.author.displayName}"></b> · <th:block th:text="${@fmt.ago(c.createdAt)}"></th:block>
+                                <span class="badge" th:if="${c.parent != null}">ответ</span>
+                                <span class="badge badge-violet" th:if="${c.pinned}"><i data-lucide="pin"></i>закреплён</span>
+                                <span class="badge badge-red" th:if="${c.hearted}"><i data-lucide="heart"></i></span></small>
+                            <p style="-webkit-line-clamp:6;color:var(--text);margin:4px 0" th:text="${c.text}"></p>
+                            <small>к видео <a style="color:var(--violet-2)" th:href="@{/watch/{id}(id=${c.video.id})}" th:text="${c.video.title}"></a></small>
+                        </div>
+                        <div class="row-actions">
+                            <form th:if="${c.parent == null}" th:action="@{/studio/comments/{id}/pin(id=${c.id},video=${videoFilter})}" method="post">
+                                <button class="btn btn-sm btn-icon" th:classappend="${c.pinned} ? 'active'" title="Закрепить"><i data-lucide="pin"></i></button>
+                            </form>
+                            <form th:action="@{/studio/comments/{id}/heart(id=${c.id},video=${videoFilter})}" method="post">
+                                <button class="btn btn-sm btn-icon" th:classappend="${c.hearted} ? 'active'" title="Сердце от автора"><i data-lucide="heart"></i></button>
+                            </form>
+                            <form th:action="@{/studio/comments/{id}/delete(id=${c.id},video=${videoFilter})}" method="post" data-confirm="Удалить комментарий?">
+                                <button class="btn btn-sm btn-icon btn-danger" title="Удалить"><i data-lucide="trash-2"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="pager" th:if="${comments.totalPages > 1}">
+                    <a class="btn btn-sm" th:if="${comments.hasPrevious()}" th:href="@{/studio/comments(page=${comments.number - 1},video=${videoFilter})}">Назад</a>
+                    <span class="badge" th:text="${comments.number + 1} + ' / ' + ${comments.totalPages}"></span>
+                    <a class="btn btn-sm" th:if="${comments.hasNext()}" th:href="@{/studio/comments(page=${comments.number + 1},video=${videoFilter})}">Дальше</a>
+                </div>
+                <div class="empty" th:if="${comments.isEmpty()}">
+                    <div class="empty-icon"><i data-lucide="messages-square"></i></div>
+                    <h3>Комментариев нет</h3>
+                    <p>Когда зрители начнут обсуждать ваши видео, вы сможете отвечать, закреплять и модерировать здесь.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

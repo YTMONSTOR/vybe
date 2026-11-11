@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${q.isEmpty()} ? 'Поиск' : ${q})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="main" style="max-width:1280px">
+        <div class="page-head">
+            <div>
+                <h1 class="page-title"><span class="title-icon"><i data-lucide="search"></i></span>
+                    <span th:text="${q.isEmpty()} ? 'Smart Search' : '«' + ${q} + '»'"></span></h1>
+                <p class="page-sub" th:if="${!q.isEmpty()}" th:text="'Найдено видео: ' + ${videos.size()} + (${channels.isEmpty()} ? '' : ', каналов: ' + ${channels.size()})"></p>
+                <p class="page-sub" th:if="${q.isEmpty()}">Ищите по названию, описанию, тегам и каналам</p>
+            </div>
+        </div>
+
+        <form class="toolbar" th:action="@{/search}" method="get" th:if="${!q.isEmpty()}">
+            <input type="hidden" name="q" th:value="${q}">
+            <select class="select" name="sort" style="width:auto" onchange="this.form.submit()">
+                <option value="relevance" th:selected="${sort == 'relevance'}">По релевантности</option>
+                <option value="date" th:selected="${sort == 'date'}">Сначала новые</option>
+                <option value="views" th:selected="${sort == 'views'}">По просмотрам</option>
+            </select>
+            <select class="select" name="duration" style="width:auto" onchange="this.form.submit()">
+                <option value="" th:selected="${duration == ''}">Любая длительность</option>
+                <option value="short" th:selected="${duration == 'short'}">До 4 минут</option>
+                <option value="medium" th:selected="${duration == 'medium'}">4–20 минут</option>
+                <option value="long" th:selected="${duration == 'long'}">Больше 20 минут</option>
+            </select>
+            <select class="select" name="category" style="width:auto" onchange="this.form.submit()">
+                <option value="">Все категории</option>
+                <option th:each="c : ${navCategories}" th:value="${c.id}" th:text="${c.name}" th:selected="${categoryId == c.id}"></option>
+            </select>
+        </form>
+
+        <section class="section" th:if="${!channels.isEmpty()}">
+            <div class="vlist">
+                <a th:each="ch : ${channels}" class="vwide" th:href="@{/channel/{u}(u=${ch.username})}" style="align-items:center">
+                    <span style="flex:0 0 min(360px,42%);display:grid;place-items:center">
+                        <th:block th:replace="~{fragments/layout :: avatar(${ch}, 'xl')}"></th:block>
+                    </span>
+                    <span class="vrow-meta">
+                        <span class="vwide-title" th:text="${ch.displayName}"></span>
+                        <span class="vcard-stats" th:text="'@' + ${ch.username} + ' • ' + ${@fmt.subscribers(ch.subscriberCount)}"></span>
+                        <span class="vwide-desc" th:if="${ch.bio != null}" th:text="${ch.bio}"></span>
+                    </span>
+                </a>
+            </div>
+        </section>
+
+        <div class="vlist stagger" th:if="${!videos.isEmpty()}">
+            <th:block th:each="v : ${videos}">
+                <article th:replace="~{fragments/cards :: wide(${v}, 0)}"></article>
+            </th:block>
+        </div>
+        <div class="empty" th:if="${videos.isEmpty() and channels.isEmpty()}">
+            <div class="empty-icon"><i data-lucide="search-x"></i></div>
+            <h3 th:text="${q.isEmpty()} ? 'Что будем искать?' : 'Ничего не найдено'"></h3>
+            <p>Попробуйте другие слова или поиск по тегу, например <b>#музыка</b>.</p>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>
